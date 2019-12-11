@@ -3,7 +3,7 @@
  */
 /*
  * @title WLED project sketch
- * @version 0.9.0-b1
+ * @version 0.9.0-dev
  * @author Christian Schwinne
  */
 
@@ -14,16 +14,15 @@
 //Uncomment some of the following lines to disable features to compile for ESP8266-01 (max flash size 434kB):
 
 //You are required to disable over-the-air updates:
-//#define WLED_DISABLE_OTA         //saves 14kb
+//#define WLED_DISABLE_OTA
 
 //You need to choose some of these features to disable:
-//#define WLED_DISABLE_ALEXA       //saves 11kb
-//#define WLED_DISABLE_BLYNK       //saves 6kb
-//#define WLED_DISABLE_CRONIXIE    //saves 3kb
-//#define WLED_DISABLE_HUESYNC     //saves 4kb
-//#define WLED_DISABLE_INFRARED    //there is no pin left for this on ESP8266-01, saves 25kb (!)
-#define WLED_ENABLE_MQTT           //saves 12kb
-#define WLED_ENABLE_ADALIGHT       //saves 500b only
+//#define WLED_DISABLE_ALEXA
+//#define WLED_DISABLE_BLYNK
+//#define WLED_DISABLE_CRONIXIE
+//#define WLED_DISABLE_HUESYNC
+//#define WLED_DISABLE_INFRARED    //there is no pin left for this on ESP8266-01
+#define WLED_ENABLE_ADALIGHT       //only saves about 500b
 
 #define WLED_DISABLE_FILESYSTEM    //SPIFFS is not used by any WLED feature yet
 //#define WLED_ENABLE_FS_SERVING   //Enable sending html file from SPIFFS before serving progmem version
@@ -98,8 +97,8 @@
 
 
 //version code in format yymmddb (b = daily build)
-#define VERSION 1912111
-char versionString[] = "0.9.0-b1";
+#define VERSION 1912051
+char versionString[] = "0.9.0-dev";
 
 
 //AP and OTA default passwords (for maximum change them!)
@@ -329,6 +328,11 @@ byte overlayCurrent = overlayDefault;
 byte overlaySpeed = 200;
 unsigned long overlayRefreshMs = 200;
 unsigned long overlayRefreshedTime;
+int overlayArr[6];
+uint16_t overlayDur[6];
+uint16_t overlayPauseDur[6];
+int nixieClockI = -1;
+bool nixiePause = false;
 
 //cronixie
 byte dP[]{0,0,0,0,0,0};
@@ -478,7 +482,7 @@ void reset()
 
 
 //append new c string to temp buffer efficiently
-bool oappend(const char* txt)
+bool oappend(char* txt)
 {
   uint16_t len = strlen(txt);
   if (olen + len >= OMAX) return false; //buffer full

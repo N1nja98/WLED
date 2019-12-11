@@ -120,6 +120,7 @@ void handleNotifications()
   {
     e131NewData = false;
     strip.show();
+    Serial.println("Show");
   }
 
   //unlock strip when realtime UDP times out

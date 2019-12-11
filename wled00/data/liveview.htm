@@ -23,19 +23,16 @@
   <script>
     update();
     
-    var tmout = null;
     function update()
     {
       if (document.hidden) {
-        clearTimeout(tmout);
-        tmout = setTimeout(update, 250);
+        setTimeout(update, 250);
         return;
       }
       fetch('/json/live')
       .then(res => {
         if (!res.ok) {
-          clearTimeout(tmout);
-          tmout = setTimeout(update, 2500);
+          setTimeout(update, 2500);
         }
         return res.json();
       })
@@ -50,12 +47,10 @@
         }
         str += ")";
         document.getElementById("canv").style.background = str;
-        clearTimeout(tmout);
-        tmout = setTimeout(update, 40);
+        setTimeout(update, 40);
       })
       .catch(function (error) {
-        clearTimeout(tmout);
-        tmout = setTimeout(update, 2500);
+        setTimeout(update, 2500);
       })
 
     }
