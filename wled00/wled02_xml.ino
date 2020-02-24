@@ -46,23 +46,37 @@ char* XML_response(AsyncWebServerRequest *request, char* dest = nullptr)
   oappend("</ix><fp>");
   oappendi(effectPalette);
   oappend("</fp><wv>");
-  if (useRGBW && !autoRGBtoRGBW) {
+  if (strip.rgbwMode) {
    oappendi(col[3]);
   } else {
    oappend("-1");
   }
   oappend("</wv><ws>");
   oappendi(colSec[3]);
-  oappend("</ws><cy>");
+  oappend("</ws><ps>");
+  oappendi((currentPreset < 1) ? 0:currentPreset);
+  oappend("</ps><cy>");
   oappendi(presetCyclingEnabled);
   oappend("</cy><ds>");
-  if (realtimeActive)
+  if (realtimeMode)
   {
     String mesg = "Live ";
-    if (realtimeIP[0] == 0)
+    if (realtimeMode == REALTIME_MODE_E131)
     {
-      mesg += "E1.31 mode";
-    } else {
+      mesg += "E1.31 mode ";
+      mesg += DMXMode;
+      mesg += " at DMX Address ";
+      mesg += DMXAddress;
+      mesg += " from ";
+      mesg += realtimeIP[0];
+      for (int i = 1; i < 4; i++)
+      {
+        mesg += ".";
+        mesg += realtimeIP[i];
+      }
+      mesg += " seq=";
+      mesg += e131LastSequenceNumber;
+    } else if (realtimeMode == REALTIME_MODE_UDP || realtimeMode == REALTIME_MODE_HYPERION) {
       mesg += "UDP from ";
       mesg += realtimeIP[0];
       for (int i = 1; i < 4; i++)
@@ -70,6 +84,10 @@ char* XML_response(AsyncWebServerRequest *request, char* dest = nullptr)
         mesg += ".";
         mesg += realtimeIP[i];
       }
+    } else if (realtimeMode == REALTIME_MODE_ADALIGHT) {
+      mesg += "USB Adalight";
+    } else { //generic
+      mesg += "data";
     }
     oappend((char*)mesg.c_str());
   } else {
@@ -144,7 +162,7 @@ void getSettingsJS(byte subPage, char* dest)
   obuf = dest;
   olen = 0;
 
-  if (subPage <1 || subPage >6) return;
+  if (subPage <1 || subPage >7) return;
 
   if (subPage == 1) {
     sappends('s',"CS",clientSSID);
@@ -176,6 +194,8 @@ void getSettingsJS(byte subPage, char* dest)
     sappends('s',"AP",fapass);
 
     sappend('v',"AC",apChannel);
+    sappend('c',"WS",noWifiSleep);
+
 
     if (WiFi.localIP()[0] != 0) //is connected
     {
@@ -220,7 +240,7 @@ void getSettingsJS(byte subPage, char* dest)
     sappend('v',"CA",briS);
     sappend('c',"EW",useRGBW);
     sappend('i',"CO",strip.colorOrder);
-    sappend('c',"AW",autoRGBtoRGBW);
+    sappend('v',"AW",strip.rgbwMode);
 
     sappend('c',"BO",turnOnAtBoot);
     sappend('v',"BP",bootPreset);
@@ -237,7 +257,6 @@ void getSettingsJS(byte subPage, char* dest)
     sappend('i',"PB",strip.paletteBlend);
     sappend('c',"RV",strip.reverseMode);
     sappend('c',"SL",skipFirstLed);
-    sappend('v',"DL",disableNLeds);
   }
 
   if (subPage == 3)
@@ -249,7 +268,7 @@ void getSettingsJS(byte subPage, char* dest)
   if (subPage == 4)
   {
     sappend('c',"BT",buttonEnabled);
-    sappend('c',"IR",irEnabled);
+    sappend('v',"IR",irEnabled);
     sappend('v',"UP",udpPort);
     sappend('c',"RB",receiveNotificationBrightness);
     sappend('c',"RC",receiveNotificationColor);
@@ -262,6 +281,8 @@ void getSettingsJS(byte subPage, char* dest)
     sappend('c',"RD",receiveDirect);
     sappend('c',"EM",e131Multicast);
     sappend('v',"EU",e131Universe);
+    sappend('v',"DA",DMXAddress);
+    sappend('v',"DM",DMXMode);
     sappend('v',"ET",realtimeTimeoutMs);
     sappend('c',"FB",arlsForceMaxBri);
     sappend('c',"RG",arlsDisableGammaCorrection);
@@ -370,5 +391,30 @@ void getSettingsJS(byte subPage, char* dest)
     oappendi(VERSION);
     oappend(") OK\";");
   }
+  
+  #ifdef WLED_ENABLE_DMX // include only if DMX is enabled
+  if (subPage == 7)
+  {
+    sappend('v',"CN",DMXChannels);
+    sappend('v',"CG",DMXGap);
+    sappend('v',"CS",DMXStart);
+    
+    sappend('i',"CH1",DMXFixtureMap[0]);
+    sappend('i',"CH2",DMXFixtureMap[1]);
+    sappend('i',"CH3",DMXFixtureMap[2]);
+    sappend('i',"CH4",DMXFixtureMap[3]);
+    sappend('i',"CH5",DMXFixtureMap[4]);
+    sappend('i',"CH6",DMXFixtureMap[5]);
+    sappend('i',"CH7",DMXFixtureMap[6]);
+    sappend('i',"CH8",DMXFixtureMap[7]);
+    sappend('i',"CH9",DMXFixtureMap[8]);
+    sappend('i',"CH10",DMXFixtureMap[9]);
+    sappend('i',"CH11",DMXFixtureMap[10]);
+    sappend('i',"CH12",DMXFixtureMap[11]);
+    sappend('i',"CH13",DMXFixtureMap[12]);
+    sappend('i',"CH14",DMXFixtureMap[13]);
+    sappend('i',"CH15",DMXFixtureMap[14]);
+    }
+  #endif
   oappend("}</script>");
 }
