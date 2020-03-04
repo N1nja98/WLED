@@ -72,7 +72,6 @@ bool colorChanged()
   {
     if (col[i] != colIT[i]) return true;
     if (colSec[i] != colSecIT[i]) return true;
-    //if (col[i] != colNlT[i]) return true; (this effectively made the ESP send out sync packets every time colorUpdated() is called, even if nothing changed)
   }
   if (bri != briIT) return true;
   return false;
@@ -251,7 +250,7 @@ void handleNightlight()
   //also handle preset cycle here
   if (presetCyclingEnabled && (millis() - presetCycledTime > presetCycleTime))
   {
-    applyPreset(presetCycCurr,presetApplyBri,presetApplyCol,presetApplyFx);
+    applyPreset(presetCycCurr,presetApplyBri);
     presetCycCurr++; if (presetCycCurr > presetCycleMax) presetCycCurr = presetCycleMin;
     if (presetCycCurr > 25) presetCycCurr = 1;
     colorUpdated(NOTIFIER_CALL_MODE_PRESET_CYCLE);
