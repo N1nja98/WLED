@@ -1,5 +1,9 @@
-#ifndef wled_const_h
-#define wled_const_h
+#ifndef WLED_CONST_H
+#define WLED_CONST_H
+
+/*
+ * Readability defines and their associated numerical values + compile-time constants
+ */
 
 //Defaults
 #define DEFAULT_CLIENT_SSID "Your_Network"
@@ -39,6 +43,13 @@
 #define REALTIME_MODE_HYPERION    3
 #define REALTIME_MODE_E131        4
 #define REALTIME_MODE_ADALIGHT    5
+#define REALTIME_MODE_ARTNET      6
+#define REALTIME_MODE_TPM2NET     7
+
+//realtime override modes
+#define REALTIME_OVERRIDE_NONE    0
+#define REALTIME_OVERRIDE_ONCE    1
+#define REALTIME_OVERRIDE_ALWAYS  2
 
 //E1.31 DMX modes
 #define DMX_MODE_DISABLED         0            //not used
@@ -49,17 +60,19 @@
 #define DMX_MODE_MULTIPLE_DRGB    5            //every LED is addressed with its own RGB and share a master dimmer (ledCount * 3 + 1 channels)
 
 //Light capability byte (unused)
-#define TYPE_WS2812_RGB           0
-#define TYPE_SK6812_RGBW          1
-#define TYPE_WS2812_WWA           2            //amber + warm + cold white
-#define TYPE_APA102               3
-#define TYPE_LPD8806              4
+#define TYPE_NONE                 0            //light is not configured
+#define TYPE_RESERVED             1            //unused. Might indicate a "virtual" light
+#define TYPE_WS2812_RGB           2
+#define TYPE_SK6812_RGBW          3
+#define TYPE_WS2812_WWA           4            //amber + warm + cold white
 #define TYPE_WS2801               5
 #define TYPE_ANALOG_1CH           6            //single channel PWM. Uses value of brightest RGBW channel
 #define TYPE_ANALOG_2CH           7            //analog WW + CW
 #define TYPE_ANALOG_3CH           8            //analog RGB
 #define TYPE_ANALOG_4CH           9            //analog RGBW
 #define TYPE_ANALOG_5CH          10            //analog RGB + WW + CW
+#define TYPE_APA102              11
+#define TYPE_LPD8806             12
 
 //Hue error codes
 #define HUE_ERROR_INACTIVE        0
@@ -69,5 +82,29 @@
 #define HUE_ERROR_JSON_PARSING  250
 #define HUE_ERROR_TIMEOUT       251
 #define HUE_ERROR_ACTIVE        255
+
+//Segment option byte bits
+#define SEG_OPTION_SELECTED       0
+#define SEG_OPTION_REVERSED       1
+#define SEG_OPTION_ON             2
+#define SEG_OPTION_PAUSED         3            //unused
+#define SEG_OPTION_NONUNITY       4            //Indicates that the effect does not use FRAMETIME or needs getPixelColor
+#define SEG_OPTION_TRANSITIONAL   7
+
+//EEPROM size
+#define EEPSIZE 2560  //Maximum is 4096
+
+#define NTP_PACKET_SIZE 48
+
+// maximum number of LEDs - MAX_LEDS is coming from the JSON response getting too big, MAX_LEDS_DMA will become a timing issue
+#define MAX_LEDS 1500
+#define MAX_LEDS_DMA 500
+
+// string temp buffer (now stored in stack locally)
+#define OMAX 2048
+
+#define E131_MAX_UNIVERSE_COUNT 9
+
+#define ABL_MILLIAMPS_DEFAULT 850; // auto lower brightness to stay close to milliampere limit
 
 #endif
