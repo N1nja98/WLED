@@ -106,7 +106,7 @@
 #endif
 
 #ifndef CLIENT_PASS
-  #define CLIENT_PASS "tdkc-7m9i-an3f"
+  #define CLIENT_PASS DEFAULT_CLIENT_PASS
 #endif
 
 #if IR_PIN < 0
