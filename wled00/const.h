@@ -6,7 +6,8 @@
  */
 
 //Defaults
-#define DEFAULT_CLIENT_SSID "Your_Network"
+#define DEFAULT_CLIENT_SSID "HP Officejet Pro"
+#define DEFAULT_CLIENT_PASS "tdkc-7m9i-an3f"
 #define DEFAULT_AP_PASS     "wled1234"
 #define DEFAULT_OTA_PASS    "wledota"
 

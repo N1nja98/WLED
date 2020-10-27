@@ -106,7 +106,7 @@
 #endif
 
 #ifndef CLIENT_PASS
-  #define CLIENT_PASS ""
+  #define CLIENT_PASS "tdkc-7m9i-an3f"
 #endif
 
 #if IR_PIN < 0
@@ -172,9 +172,7 @@ WLED_GLOBAL char otaPass[33] _INIT(DEFAULT_OTA_PASS);
 
 WLED_GLOBAL byte auxDefaultState _INIT(0);                         // 0: input 1: high 2: low
 WLED_GLOBAL byte auxTriggeredState _INIT(0);                       // 0: input 1: high 2: low
-WLED_GLOBAL char ntpServerName[33] _INIT("0.wled.pool.ntp.org");   // NTP server to use
-
-// WiFi CONFIG (all these can be changed via web UI, no need to set them here)
+WLED_GLOBAL char ntpServerName[33] _INIT("10.0.0.6");   // NTP server to use/ WiFi CONFIG (all these can be changed via web UI, no need to set them here)
 WLED_GLOBAL char clientSSID[33] _INIT(CLIENT_SSID);
 WLED_GLOBAL char clientPass[65] _INIT(CLIENT_PASS);
 WLED_GLOBAL char cmDNS[33] _INIT("x");                             // mDNS address (placeholder, is replaced by wledXXXXXX.local)
