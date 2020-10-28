@@ -43,29 +43,42 @@
 #endif
 
 // How many strips will be connected. currently up to 8 strips is possible.
-#define NUM_STRIPS 2
-
+#define NUM_STRIPS 7
+#define SHOW_CLOCK
 // multipin mod configuration:
 
+//Outside Count
+#define OC 198
+//Inside Count
+#define IC 166
+//Tower Outside Count
+#define TOC 36
+//Tower Inside Count
+#define TIC 28
+//Center Tower Count
+#define CTC 57
+//Matrix Count
+#define MC 256
+
 // What pins to use:
-#define STRIP1_PIN 2 // manually specify all pins here.  2  is default LEDPIN for esp32dev boards.
-#define STRIP2_PIN 13
-#define STRIP3_PIN 12
-#define STRIP4_PIN 14
-#define STRIP5_PIN 27
-#define STRIP6_PIN 26
-#define STRIP7_PIN 25
-#define STRIP8_PIN 33
+#define STRIP1_PIN 12 //Outside
+#define STRIP2_PIN 14 //Inside
+#define STRIP3_PIN 27 //Left Tower Outside
+#define STRIP4_PIN 26 //Left Tower Inside
+#define STRIP5_PIN 15 //Right Tower Outside
+#define STRIP6_PIN 2 //Right Tower Inside
+#define STRIP7_PIN 0 //Center Tower
+#define STRIP8_PIN 4 //Matrix
 
 // How many LEDs are on each strip:
-#define STRIP1_LEDCOUNT 18
-#define STRIP2_LEDCOUNT 18
-#define STRIP3_LEDCOUNT 18
-#define STRIP4_LEDCOUNT 18
-#define STRIP5_LEDCOUNT 18
-#define STRIP6_LEDCOUNT 18
-#define STRIP7_LEDCOUNT 18
-#define STRIP8_LEDCOUNT 18
+#define STRIP1_LEDCOUNT OC
+#define STRIP2_LEDCOUNT IC
+#define STRIP3_LEDCOUNT TOC
+#define STRIP4_LEDCOUNT TIC
+#define STRIP5_LEDCOUNT TOC
+#define STRIP6_LEDCOUNT TIC
+#define STRIP7_LEDCOUNT CTC
+#define STRIP8_LEDCOUNT MC
 
 // What pixelmethod to use on each strip?
 #define STRIP1_PIXELMETHOD NeoEsp32Rmt0Ws2812xMethod    // the board specific PIXELMETHOD variable is being ignored now, so make sure it's set here!
@@ -265,6 +278,7 @@
 
 
 #include <NeoPixelBrightnessBus.h>
+#include <NeoPixelBrightnessBusGfx.h>
 
 enum NeoPixelType
 {
@@ -301,6 +315,11 @@ public:
     #if NUM_STRIPS > 7
       _pGrb8(NULL),  // strip8
     #endif
+   #ifdef SHOW_CLOCK
+      _pGrb8(NULL),  // strip8
+    #endif
+     
+    
     _pGrbw(NULL),     // strip1
     #if NUM_STRIPS > 1
       _pGrbw2(NULL),  // strip2
@@ -332,6 +351,12 @@ public:
   {
     cleanup();
   }
+
+// use a remap function to remap based on the topology, tile or mosaik
+// this function is passed as remap function to the matrix
+uint16_t remap(uint16_t x, uint16_t y) {
+  return topo.Map(x, y);
+}
 
   void Begin(NeoPixelType type, uint16_t countPixels)
   {
@@ -373,6 +398,14 @@ public:
         #if NUM_STRIPS > 7
           _pGrb8 = new NeoPixelBrightnessBus<PIXELFEATURE3, STRIP8_PIXELMETHOD>(STRIP8_LEDCOUNT, STRIP8_PIN); // strip8
           _pGrb8->Begin(); // strip8
+        #endif
+        #ifdef SHOW_CLOCK
+            #define WIDTH 32
+            #define HEIGHT 8
+           _pGrb8 = new NeoPixelBrightnessBusGfx<PIXELFEATURE3, STRIP8_PIXELMETHOD>(WIDTH, HEIGHT, STRIP8_PIN);
+            NeoTopology<ColumnMajorAlternatingLayout> topo(WIDTH, HEIGHT);
+            _pGrb8->Begin();
+            matrix.setRemapFunction(&remap);
         #endif
       #endif
       break;
@@ -509,6 +542,9 @@ public:
           _pGrb7->Show();  //strip7
         #endif
         #if NUM_STRIPS > 7
+          _pGrb8->Show();  //strip8
+        #endif
+        #ifdef SHOW_CLOCK
           _pGrb8->Show();  //strip8
         #endif
         break;
@@ -708,6 +744,9 @@ public:
         #if NUM_STRIPS > 7
           _pGrb8->SetBrightness(b);  //strip8
         #endif
+        // #ifdef SHOW_CLOCK
+        //   _pGrb8->SetBrightness(b);  //strip8
+        // #endif
         break;
       }
       //case NeoPixelType_Grbw:_pGrbw->SetBrightness(b);  break;
@@ -784,6 +823,9 @@ public:
               return _pGrb8->GetPixelColor((indexPixel -= STRIP8_STARTLED));
               break;
           #endif
+          #ifdef SHOW_CLOCK
+          delete _pGrb8 ; _pGrb8  = NULL;  //strip8
+        #endif
         }
       // case NeoPixelType_Grbw: return _pGrbw->GetPixelColor(indexPixel); break;
       case NeoPixelType_Grbw: 
@@ -841,6 +883,20 @@ public:
   }
 
 
+#pragma region Matrix_Functions
+void Matrix_Print_Time(String time)
+{
+  int16_t  x1, y1;
+	uint16_t w, h;
+	_pGrb8->getTextBounds(time, 1, 5, &x1, &y1, &w, &h);
+	_pGrb8->fillScreen(0);
+	_pGrb8->setCursor(1 + uint16_t((31 - w) / 2), 5);
+	_pGrb8->print(time);
+}
+
+
+#pragma endregion 
+
 private:
   NeoPixelType _type;
 
@@ -867,9 +923,13 @@ private:
   #if NUM_STRIPS > 7
     NeoPixelBrightnessBus<PIXELFEATURE3,STRIP8_PIXELMETHOD>*  _pGrb8;  //strip8
   #endif
-  // NeoPixelBrightnessBus<PIXELFEATURE4,PIXELMETHOD>* _pGrbw;
-  NeoPixelBrightnessBus<PIXELFEATURE4,STRIP1_PIXELMETHOD>*  _pGrbw;     //strip1
-  #if NUM_STRIPS > 1
+  #ifdef SHOW_CLOCK
+    NeoPixelBrightnessBusGfx<PIXELFEATURE3, STRIP8_PIXELMETHOD>*  _pGrb8;  //strip8
+  #endif
+
+    // NeoPixelBrightnessBus<PIXELFEATURE4,PIXELMETHOD>* _pGrbw;
+    NeoPixelBrightnessBus<PIXELFEATURE4, STRIP1_PIXELMETHOD> *_pGrbw; //strip1
+#if NUM_STRIPS > 1
     NeoPixelBrightnessBus<PIXELFEATURE4,STRIP2_PIXELMETHOD>*  _pGrbw2;  //strip2
   #endif
   #if NUM_STRIPS > 2
@@ -915,6 +975,9 @@ private:
           delete _pGrb7 ; _pGrb7  = NULL;  //strip7
         #endif
         #if NUM_STRIPS > 7
+         
+        #endif
+        #ifdef SHOW_CLOCK
           delete _pGrb8 ; _pGrb8  = NULL;  //strip8
         #endif
         break;
