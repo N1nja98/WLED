@@ -103,6 +103,15 @@ void WS2812FX::service() {
   _triggered = false;
 }
 
+int x = mw;
+int pass = 0;
+
+
+void WS2812FX::Print_Time(String time, bool show,bool dim)
+{
+bus->Matrix_Print_Time(time,show,dim)
+}
+
 void WS2812FX::setPixelColor(uint16_t n, uint32_t c) {
   uint8_t w = (c >> 24);
   uint8_t r = (c >> 16);

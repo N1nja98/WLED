@@ -22,8 +22,74 @@ void userConnected()
 
 }
 
+bool colon = false;
+byte prevBri;
 //loop. You can use "if (WLED_CONNECTED)" to check for successful connection
 void userLoop()
 {
-  
+  if (bri > 0)
+	{
+
+		prevBri = bri;
+	}
+
+	EVERY_N_MILLIS(500)
+	{
+		updateLocalTime();
+
+		String currentTime;
+
+		if (colon == true)
+		{
+			currentTime += (useAMPM) ? ((hour(localTime) % 12 == 0) ? 12 : hour(localTime) % 12) : hour(localTime);
+			currentTime = currentTime + ":";
+			if (minute(localTime) < 10)
+				currentTime = currentTime + "0";
+			currentTime = currentTime + minute(localTime);
+			currentTime = currentTime + ":";
+			if (second(localTime) < 10)
+				currentTime = currentTime + "0";
+			currentTime = currentTime + second(localTime);
+			/*if (useAMPM)
+				{
+					ret += (hour(localTIme) > 11) ? " PM" : " AM";
+				}*/
+			colon = false;
+		}
+		else
+		{
+			currentTime += (useAMPM) ? ((hour(localTime) % 12 == 0) ? 12 : hour(localTime) % 12) : hour(localTime);
+			currentTime = currentTime + " ";
+			if (minute(localTime) < 10)
+				currentTime = currentTime + "0";
+			currentTime = currentTime + minute(localTime);
+			currentTime = currentTime + " ";
+			if (second(localTime) < 10)
+				currentTime = currentTime + "0";
+			currentTime = currentTime + second(localTime);
+			/*if (useAMPM)
+				{
+					ret += (hour(localTime) > 11) ? " PM" : " AM";
+				}*/
+
+			colon = true;
+		}
+		if (bri == 0)
+		{
+			bool dim = false;
+			 uint8_t m = month(localTime);
+			  uint8_t h = hour(localTime);
+
+            if (((m > 10 || m < 3) && (h > 16 || h < 8)) || ((m > 4 && m < 9) && (h > 21 || h < 8)) || (((m > 2 && m < 5) || (m > 8 && m < 11)) && (h > 18 || h < 8)))
+            {
+	             dim = true;
+
+	        }
+
+            strip.Print_Time(currentTime, true, dim);
+		}
+		else
+		{
+			strip.Print_Time(currentTime, false, false);
+		}
 }

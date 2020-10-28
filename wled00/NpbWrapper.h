@@ -279,6 +279,7 @@
 
 #include <NeoPixelBrightnessBus.h>
 #include <NeoPixelBrightnessBusGfx.h>
+#include <Fonts/Org_04.h>
 
 enum NeoPixelType
 {
@@ -352,6 +353,9 @@ public:
     cleanup();
   }
 
+const uint16_t colors[] = {
+  _pGrb8->Color(255, 0, 0), _pGrb8->Color(0, 255, 0), _pGrb8->Color(0, 0, 255) };
+
 // use a remap function to remap based on the topology, tile or mosaik
 // this function is passed as remap function to the matrix
 uint16_t remap(uint16_t x, uint16_t y) {
@@ -405,8 +409,13 @@ uint16_t remap(uint16_t x, uint16_t y) {
            _pGrb8 = new NeoPixelBrightnessBusGfx<PIXELFEATURE3, STRIP8_PIXELMETHOD>(WIDTH, HEIGHT, STRIP8_PIN);
             NeoTopology<ColumnMajorAlternatingLayout> topo(WIDTH, HEIGHT);
             _pGrb8->Begin();
-            matrix.setRemapFunction(&remap);
-        #endif
+            _pGrb8->setTextWrap(false);
+            _pGrb8->setBrightness(255);
+            _pGrb8->setTextColor(colors2[2]);
+            _pGrb8->setFont(&Org_04);
+            _pGrb8->setRemapFunction(&remap);
+
+#endif
       #endif
       break;
 
@@ -884,14 +893,43 @@ uint16_t remap(uint16_t x, uint16_t y) {
 
 
 #pragma region Matrix_Functions
-void Matrix_Print_Time(String time)
+void Matrix_Print_Time(String time, bool show,bool dim)
 {
-  int16_t  x1, y1;
-	uint16_t w, h;
-	_pGrb8->getTextBounds(time, 1, 5, &x1, &y1, &w, &h);
-	_pGrb8->fillScreen(0);
-	_pGrb8->setCursor(1 + uint16_t((31 - w) / 2), 5);
-	_pGrb8->print(time);
+  int16_t x1, y1;
+  uint16_t w, h;
+  _pGrb8->getTextBounds(time, 1, 5, &x1, &y1, &w, &h);
+
+if (w > 28)
+{
+   _pGrb8->setCursor( uint16_t((32 - ( w)) / 2)-3, 5);
+}
+else
+{
+   _pGrb8->setCursor(  uint16_t((32 - w) / 2), 5);
+}
+
+#endif
+
+  _pGrb8->fillScreen(0);
+  _pGrb8->print(time);
+
+  if (show)
+  {
+   if (dim)
+   {
+         _pGrb8->setBrightness(10);
+   }
+   else
+   {
+     _pGrb8->setBrightness(255);
+   }
+   
+    // FastLED.show();
+  }
+  else
+  {
+      _pGrb8->setBrightness(255);
+  }
 }
 
 
