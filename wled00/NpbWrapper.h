@@ -1,4 +1,6 @@
 //this code is a modified version of https://github.com/Makuna/NeoPixelBus/issues/103
+
+
 #ifndef NpbWrapper_h
 #define NpbWrapper_h
 
@@ -278,8 +280,6 @@
 
 
 #include <NeoPixelBrightnessBus.h>
-#include <NeoPixelBrightnessBusGfx.h>
-#include <Fonts/Org_04.h>
 
 enum NeoPixelType
 {
@@ -316,11 +316,6 @@ public:
     #if NUM_STRIPS > 7
       _pGrb8(NULL),  // strip8
     #endif
-   #ifdef SHOW_CLOCK
-      _pGrb8(NULL),  // strip8
-    #endif
-     
-    
     _pGrbw(NULL),     // strip1
     #if NUM_STRIPS > 1
       _pGrbw2(NULL),  // strip2
@@ -345,7 +340,7 @@ public:
     #endif
     _type(NeoPixelType_None)
   {
-
+     
   }
 
   ~NeoPixelWrapper()
@@ -353,19 +348,13 @@ public:
     cleanup();
   }
 
-const uint16_t colors[] = {
-  _pGrb8->Color(255, 0, 0), _pGrb8->Color(0, 255, 0), _pGrb8->Color(0, 0, 255) };
-
-// use a remap function to remap based on the topology, tile or mosaik
-// this function is passed as remap function to the matrix
-uint16_t remap(uint16_t x, uint16_t y) {
-  return topo.Map(x, y);
-}
+   
 
   void Begin(NeoPixelType type, uint16_t countPixels)
   {
     cleanup();
     _type = type;
+    //MatrixBegin();
 
     switch (_type)
     {
@@ -403,19 +392,6 @@ uint16_t remap(uint16_t x, uint16_t y) {
           _pGrb8 = new NeoPixelBrightnessBus<PIXELFEATURE3, STRIP8_PIXELMETHOD>(STRIP8_LEDCOUNT, STRIP8_PIN); // strip8
           _pGrb8->Begin(); // strip8
         #endif
-        #ifdef SHOW_CLOCK
-            #define WIDTH 32
-            #define HEIGHT 8
-           _pGrb8 = new NeoPixelBrightnessBusGfx<PIXELFEATURE3, STRIP8_PIXELMETHOD>(WIDTH, HEIGHT, STRIP8_PIN);
-            NeoTopology<ColumnMajorAlternatingLayout> topo(WIDTH, HEIGHT);
-            _pGrb8->Begin();
-            _pGrb8->setTextWrap(false);
-            _pGrb8->setBrightness(255);
-            _pGrb8->setTextColor(colors2[2]);
-            _pGrb8->setFont(&Org_04);
-            _pGrb8->setRemapFunction(&remap);
-
-#endif
       #endif
       break;
 
@@ -551,9 +527,6 @@ uint16_t remap(uint16_t x, uint16_t y) {
           _pGrb7->Show();  //strip7
         #endif
         #if NUM_STRIPS > 7
-          _pGrb8->Show();  //strip8
-        #endif
-        #ifdef SHOW_CLOCK
           _pGrb8->Show();  //strip8
         #endif
         break;
@@ -753,9 +726,6 @@ uint16_t remap(uint16_t x, uint16_t y) {
         #if NUM_STRIPS > 7
           _pGrb8->SetBrightness(b);  //strip8
         #endif
-        // #ifdef SHOW_CLOCK
-        //   _pGrb8->SetBrightness(b);  //strip8
-        // #endif
         break;
       }
       //case NeoPixelType_Grbw:_pGrbw->SetBrightness(b);  break;
@@ -832,9 +802,6 @@ uint16_t remap(uint16_t x, uint16_t y) {
               return _pGrb8->GetPixelColor((indexPixel -= STRIP8_STARTLED));
               break;
           #endif
-          #ifdef SHOW_CLOCK
-          delete _pGrb8 ; _pGrb8  = NULL;  //strip8
-        #endif
         }
       // case NeoPixelType_Grbw: return _pGrbw->GetPixelColor(indexPixel); break;
       case NeoPixelType_Grbw: 
@@ -892,51 +859,9 @@ uint16_t remap(uint16_t x, uint16_t y) {
   }
 
 
-#pragma region Matrix_Functions
-void Matrix_Print_Time(String time, bool show,bool dim)
-{
-  int16_t x1, y1;
-  uint16_t w, h;
-  _pGrb8->getTextBounds(time, 1, 5, &x1, &y1, &w, &h);
-
-if (w > 28)
-{
-   _pGrb8->setCursor( uint16_t((32 - ( w)) / 2)-3, 5);
-}
-else
-{
-   _pGrb8->setCursor(  uint16_t((32 - w) / 2), 5);
-}
-
-#endif
-
-  _pGrb8->fillScreen(0);
-  _pGrb8->print(time);
-
-  if (show)
-  {
-   if (dim)
-   {
-         _pGrb8->setBrightness(10);
-   }
-   else
-   {
-     _pGrb8->setBrightness(255);
-   }
-   
-    // FastLED.show();
-  }
-  else
-  {
-      _pGrb8->setBrightness(255);
-  }
-}
-
-
-#pragma endregion 
-
 private:
   NeoPixelType _type;
+
 
   // have a member for every possible type
   NeoPixelBrightnessBus<PIXELFEATURE3,STRIP1_PIXELMETHOD>*  _pGrb;     //strip1
@@ -961,13 +886,9 @@ private:
   #if NUM_STRIPS > 7
     NeoPixelBrightnessBus<PIXELFEATURE3,STRIP8_PIXELMETHOD>*  _pGrb8;  //strip8
   #endif
-  #ifdef SHOW_CLOCK
-    NeoPixelBrightnessBusGfx<PIXELFEATURE3, STRIP8_PIXELMETHOD>*  _pGrb8;  //strip8
-  #endif
-
-    // NeoPixelBrightnessBus<PIXELFEATURE4,PIXELMETHOD>* _pGrbw;
-    NeoPixelBrightnessBus<PIXELFEATURE4, STRIP1_PIXELMETHOD> *_pGrbw; //strip1
-#if NUM_STRIPS > 1
+  // NeoPixelBrightnessBus<PIXELFEATURE4,PIXELMETHOD>* _pGrbw;
+  NeoPixelBrightnessBus<PIXELFEATURE4,STRIP1_PIXELMETHOD>*  _pGrbw;     //strip1
+  #if NUM_STRIPS > 1
     NeoPixelBrightnessBus<PIXELFEATURE4,STRIP2_PIXELMETHOD>*  _pGrbw2;  //strip2
   #endif
   #if NUM_STRIPS > 2
@@ -991,6 +912,7 @@ private:
 
   void cleanup()
   {
+    
     switch (_type) {
       case NeoPixelType_Grb:  {
         delete _pGrb ; _pGrb  = NULL;    //strip1
@@ -1013,9 +935,6 @@ private:
           delete _pGrb7 ; _pGrb7  = NULL;  //strip7
         #endif
         #if NUM_STRIPS > 7
-         
-        #endif
-        #ifdef SHOW_CLOCK
           delete _pGrb8 ; _pGrb8  = NULL;  //strip8
         #endif
         break;

@@ -28,6 +28,7 @@
 #define WS2812FX_h
 
 #include "NpbWrapper.h"
+
 #include "const.h"
 
 #define FASTLED_INTERNAL //remove annoying pragma messages

@@ -1,4 +1,4 @@
-#include "wled.h"
+
 /*
  * This v1 usermod file allows you to add own functionality to WLED more easily
  * See: https://github.com/Aircoookie/WLED/wiki/Add-own-functionality
@@ -11,15 +11,95 @@
 //Use userVar0 and userVar1 (API calls &U0=,&U1=, uint16_t)
 
 //gets called once at boot. Do all initialization that doesn't depend on network here
+#include "wled.h"
+#include <NeoPixelBrightnessBusGfx.h>
+#include <NeoPixelBrightnessBus.h>
+#include <Fonts/Org_04.h>
+
+#define M_PIN 4
+
+#define WIDTH 32
+#define HEIGHT 8
+
+// See NeoPixelBus documentation for choosing the correct Feature and Method
+// (https://github.com/Makuna/NeoPixelBus/wiki/NeoPixelBus-object)
+NeoPixelBrightnessBusGfx<NeoGrbFeature, NeoEsp32Rmt7Ws2812xMethod> matrix(WIDTH, HEIGHT, M_PIN);
+
+// See NeoPixelBus documentation for choosing the correct NeoTopology
+// you may also use NeoTile or NeoMosaik
+// (https://github.com/Makuna/NeoPixelBus/wiki/Matrix-Panels-Support)
+NeoTopology<ColumnMajorAlternatingLayout> topo(WIDTH, HEIGHT);
+
+const uint16_t colors[] = {
+	matrix.Color(255, 0, 0), matrix.Color(0, 255, 0), matrix.Color(0, 0, 255)};
+
+// use a remap function to remap based on the topology, tile or mosaik
+// this function is passed as remap function to the matrix
+uint16_t remap(uint16_t x, uint16_t y)
+{
+	return topo.Map(x, y);
+}
+
+void MatrixBegin()
+{
+	Serial.println("Matrix Begin");
+	matrix.Begin();
+
+	// pass the remap function
+	matrix.setRemapFunction(&remap);
+	matrix.setTextWrap(false);
+	 matrix.SetBrightness(40);
+	matrix.setTextColor(colors[0]);
+	matrix.setFont(&Org_04);
+}
+
+void Matrix_Print_Time(String time, bool show, bool dim)
+{
+	int16_t x1, y1;
+	uint16_t w, h;
+	matrix.getTextBounds(time, 1, 5, &x1, &y1, &w, &h);
+
+	if (w > 28)
+	{
+		matrix.setCursor(uint16_t((32 - (w)) / 2) - 3, 5);
+	}
+	else
+	{
+		matrix.setCursor(uint16_t((32 - w) / 2), 5);
+	}
+
+	matrix.fillScreen(0);
+	matrix.print(time);
+
+	if (show)
+	{
+		if (dim)
+		{
+			matrix.setBrightness(10);
+		}
+		else
+		{
+			matrix.setBrightness(255);
+		}
+
+	}
+	else
+	{
+		matrix.setBrightness(255);
+	}
+	Serial.println("Matrix Begin");
+
+	matrix.Show();
+}
+
 void userSetup()
 {
-  
+	MatrixBegin();
 }
 
 //gets called every time WiFi is (re-)connected. Initialize own network interfaces here
 void userConnected()
 {
-
 }
 
 bool colon = false;
@@ -27,7 +107,7 @@ byte prevBri;
 //loop. You can use "if (WLED_CONNECTED)" to check for successful connection
 void userLoop()
 {
-  if (bri > 0)
+	if (bri > 0)
 	{
 
 		prevBri = bri;
@@ -77,19 +157,19 @@ void userLoop()
 		if (bri == 0)
 		{
 			bool dim = false;
-			 uint8_t m = month(localTime);
-			  uint8_t h = hour(localTime);
+			uint8_t m = month(localTime);
+			uint8_t h = hour(localTime);
 
-            if (((m > 10 || m < 3) && (h > 16 || h < 8)) || ((m > 4 && m < 9) && (h > 21 || h < 8)) || (((m > 2 && m < 5) || (m > 8 && m < 11)) && (h > 18 || h < 8)))
-            {
-	             dim = true;
+			if (((m > 10 || m < 3) && (h > 16 || h < 8)) || ((m > 4 && m < 9) && (h > 21 || h < 8)) || (((m > 2 && m < 5) || (m > 8 && m < 11)) && (h > 18 || h < 8)))
+			{
+				dim = true;
+			}
 
-	        }
-
-            strip.Print_Time(currentTime, true, dim);
+			Matrix_Print_Time(currentTime, true, dim);
 		}
 		else
 		{
-			strip.Print_Time(currentTime, false, false);
+			Matrix_Print_Time(currentTime, true, false);
 		}
+	}
 }
