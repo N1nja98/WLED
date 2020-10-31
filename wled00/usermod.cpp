@@ -14,7 +14,7 @@
 #include "wled.h"
 #include <NeoPixelBrightnessBusGfx.h>
 #include <NeoPixelBrightnessBus.h>
-#include <Fonts/Org_04.h>
+#include <Fonts/ORG_04.h>
 
 #define M_PIN 4
 
@@ -40,6 +40,7 @@ uint16_t remap(uint16_t x, uint16_t y)
 	return topo.Map(x, y);
 }
 
+
 void MatrixBegin()
 {
 	Serial.println("Matrix Begin");
@@ -49,7 +50,7 @@ void MatrixBegin()
 	matrix.setRemapFunction(&remap);
 	matrix.setTextWrap(false);
 	 matrix.SetBrightness(40);
-	matrix.setTextColor(colors[0]);
+	matrix.setTextColor(colors[2]);
 	matrix.setFont(&Org_04);
 }
 
@@ -69,25 +70,26 @@ void Matrix_Print_Time(String time, bool show, bool dim)
 	}
 
 	matrix.fillScreen(0);
+	Serial.println(time);
 	matrix.print(time);
+	
 
 	if (show)
 	{
 		if (dim)
 		{
-			matrix.setBrightness(10);
+			matrix.SetBrightness(10);
 		}
 		else
 		{
-			matrix.setBrightness(255);
+			matrix.SetBrightness(255);
 		}
 
 	}
 	else
 	{
-		matrix.setBrightness(255);
+		matrix.SetBrightness(255);
 	}
-	Serial.println("Matrix Begin");
 
 	matrix.Show();
 }
@@ -104,9 +106,13 @@ void userConnected()
 
 bool colon = false;
 byte prevBri;
+
 //loop. You can use "if (WLED_CONNECTED)" to check for successful connection
 void userLoop()
 {
+
+
+
 	if (bri > 0)
 	{
 
