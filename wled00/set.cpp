@@ -33,7 +33,7 @@ void handleSettingsSet(AsyncWebServerRequest *request, byte subPage)
 {
 
   //0: menu 1: wifi 2: leds 3: ui 4: sync 5: time 6: sec 7: DMX
-  if (subPage <1 || subPage >7) return;
+  if (subPage <1 || subPage >8) return;
 
   //WIFI SETTINGS
   if (subPage == 1)
@@ -328,6 +328,28 @@ void handleSettingsSet(AsyncWebServerRequest *request, byte subPage)
   }
   
   #endif
+
+  //Clock
+  if (subPage == 8)
+  {
+    if (request->hasArg(F("TOC"))) //Clock On
+    {
+      clock_on = request->hasArg(F("TOC"));
+    }
+    if (request->hasArg(F("DL"))) //Dim Lights
+    {
+      dim_lights = request->hasArg(F("DL"));
+    }
+
+    char *hex;
+    byte *rgb;
+
+    strlcpy(hex, request->arg(F("CS")).c_str(), 33);
+    colorFromDecOrHexString(rgb, hex);
+    clock_col = color16bit(rgb[0],rgb[1],rgb[2]);
+  }
+
+  
   if (subPage != 6 || !doReboot) saveSettingsToEEPROM(); //do not save if factory reset
   if (subPage == 2) {
     strip.init(useRGBW,ledCount,skipFirstLed);

@@ -312,6 +312,20 @@ WLED_GLOBAL uint16_t userVar0 _INIT(0), userVar1 _INIT(0); //available for use i
   WLED_GLOBAL uint16_t DMXStartLED _INIT(0);      // LED from which DMX fixtures start
 #endif
 
+//Clock CONFIG
+// Downgrade 24-bit color to 16-bit (add reverse gamma lookup here?)
+uint16_t color16bit(uint8_t r, uint8_t g, uint8_t b)
+{
+  return ((uint16_t)(r & 0xF8) << 8) |
+         ((uint16_t)(g & 0xFC) << 3) |
+         (b >> 3);
+}
+
+WLED_GLOBAL bool clock_on _INIT(true); //Show Clock
+WLED_GLOBAL bool dim_lights _INIT(true); //Automatically dim Clock lights when turned off
+WLED_GLOBAL uint8_t dim_brightness _INIT(7); //Clock brightness whenn dimmed
+WLED_GLOBAL uint16_t  clock_col _INIT(color16bit(0,0,255));  //Clock color
+
 // internal global variable declarations
 // wifi
 WLED_GLOBAL bool apActive _INIT(false);

@@ -21,6 +21,8 @@
 #define WIDTH 32
 #define HEIGHT 8
 
+
+
 // See NeoPixelBus documentation for choosing the correct Feature and Method
 // (https://github.com/Makuna/NeoPixelBus/wiki/NeoPixelBus-object)
 NeoPixelBrightnessBusGfx<NeoGrbFeature, NeoEsp32Rmt7Ws2812xMethod> matrix(WIDTH, HEIGHT, M_PIN);
@@ -40,17 +42,15 @@ uint16_t remap(uint16_t x, uint16_t y)
 	return topo.Map(x, y);
 }
 
-
 void MatrixBegin()
 {
-	Serial.println("Matrix Begin");
 	matrix.Begin();
 
 	// pass the remap function
 	matrix.setRemapFunction(&remap);
 	matrix.setTextWrap(false);
-	 matrix.SetBrightness(40);
-	matrix.setTextColor(colors[2]);
+	matrix.SetBrightness(255);
+	matrix.setTextColor(clock_col);
 	matrix.setFont(&Org_04);
 }
 
@@ -70,28 +70,25 @@ void Matrix_Print_Time(String time, bool show, bool dim)
 	}
 
 	matrix.fillScreen(0);
-	Serial.println(time);
 	matrix.print(time);
-	
 
 	if (show)
 	{
 		if (dim)
 		{
-			matrix.SetBrightness(10);
+			matrix.SetBrightness(dim_brightness);
 		}
 		else
 		{
 			matrix.SetBrightness(255);
 		}
 
+		matrix.Show();
 	}
 	else
 	{
 		matrix.SetBrightness(255);
 	}
-
-	matrix.Show();
 }
 
 void userSetup()
@@ -106,12 +103,11 @@ void userConnected()
 
 bool colon = false;
 byte prevBri;
+unsigned long prevMill;
 
 //loop. You can use "if (WLED_CONNECTED)" to check for successful connection
 void userLoop()
 {
-
-
 
 	if (bri > 0)
 	{
@@ -119,10 +115,9 @@ void userLoop()
 		prevBri = bri;
 	}
 
-	EVERY_N_MILLIS(500)
+	if (millis() - prevMill >= 500)
 	{
 		updateLocalTime();
-
 		String currentTime;
 
 		if (colon == true)
@@ -162,6 +157,7 @@ void userLoop()
 		}
 		if (bri == 0)
 		{
+
 			bool dim = false;
 			uint8_t m = month(localTime);
 			uint8_t h = hour(localTime);
@@ -177,5 +173,6 @@ void userLoop()
 		{
 			Matrix_Print_Time(currentTime, true, false);
 		}
+		prevMill = millis();
 	}
 }
