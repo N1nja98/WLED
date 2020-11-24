@@ -332,21 +332,42 @@ void handleSettingsSet(AsyncWebServerRequest *request, byte subPage)
   //Clock
   if (subPage == 8)
   {
-    if (request->hasArg(F("TOC"))) //Clock On
+    clock_on = (bool)request->hasArg(F("TOC"));
+   
+    if (!clock_on)
     {
-      clock_on = request->hasArg(F("TOC"));
+      turnOffClock();
     }
-    if (request->hasArg(F("DL"))) //Dim Lights
-    {
-      dim_lights = request->hasArg(F("DL"));
-    }
+    
+    norm_brightness = request->arg(F("CB")).toInt();
+    dim_lights = (bool)request->hasArg(F("DL"));
+    dim_brightness = request->arg(F("DB")).toInt();
+    setClockBrightness(dim_brightness);
+    strlcpy(clock_hex_col, request->arg(F("CHC")).c_str(), 8);
+    clock_col = color16bitFromDecOrHexString((char *)request->arg(F("CHC")).c_str());
+    setClockColor(clock_col);
+    time_format  = request->arg(F("TF")).toInt();
+    date_format  = request->arg(F("DTF")).toInt();
+    show_time = (bool)request->hasArg(F("ST"));
+    show_date = (bool)request->hasArg(F("SD"));
+    show_greeting = (bool)request->hasArg(F("SG"));
+    scroll_speed = (byte)((request->arg(F("TSS")).toInt()) / 10);
+    opt_alt_speed = (byte)((request->arg(F("OAC")).toInt()));
+    auto_dim = (bool)request->hasArg(F("AD"));
+    DEBUG_PRINT("request->arg(F(DCF)):");
+    DEBUG_PRINTLN(request->arg(F("DCF")));
+    tmElements_t t = timeFromString(request->arg(F("DCF")));
+    DEBUG_PRINT("t.Hour:");
+    DEBUG_PRINTLN(t.Hour);
+    DEBUG_PRINT("t.Minute:");
+    DEBUG_PRINTLN(t.Minute);
+    dim_from_hour = t.Hour;
+    dim_from_minute = t.Minute;
 
-    char *hex;
-    byte *rgb;
+    t = timeFromString(request->arg(F("DCT")));
+    dim_to_hour = t.Hour;
+    dim_to_minute = t.Minute;
 
-    strlcpy(hex, request->arg(F("CS")).c_str(), 33);
-    colorFromDecOrHexString(rgb, hex);
-    clock_col = color16bit(rgb[0],rgb[1],rgb[2]);
   }
 
   

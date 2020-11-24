@@ -316,10 +316,8 @@ const char PAGE_settings_dmx[] PROGMEM = R"=====()=====";
         str
           .replace(/\<link rel="stylesheet".*\>/gms, "")
           .replace(/\<style\>.*\<\/style\>/gms, "%CSS%%SCSS%")
-          .replace(
-            /function GetV().*\<\/script\>/gms,
-            "function GetV() {var d=document;\n"
-          ),
+          .replace(/function GetV().*\<\/script\>/gms, "function GetV() {var d=document;\n"),
+          
     },
     {
       file: "settings_sec.htm",

@@ -288,6 +288,25 @@ void saveSettingsToEEPROM()
   } // last used: 2549. maybe leave a few bytes for future expansion and go on with 2600 kthxbye.
   #endif
 
+  //Clock
+  EEPROM.write(2551, clock_on);
+  EEPROM.write(2552, norm_brightness);
+  EEPROM.write(2553, dim_lights);
+  EEPROM.write(2554, dim_brightness);
+  writeStringToEEPROM(2944, clock_hex_col, 8);
+  EEPROM.write(2555, time_format);
+  EEPROM.write(2556, date_format);
+  EEPROM.write(2557, show_time);
+  EEPROM.write(2558, show_date);
+  EEPROM.write(2559, show_greeting);
+  EEPROM.write(2954, scroll_speed);
+  EEPROM.write(2955, opt_alt_speed);
+  EEPROM.write(2956, auto_dim);
+  EEPROM.write(2957, dim_from_hour);
+  EEPROM.write(2958, dim_from_minute);
+  EEPROM.write(2959, dim_to_hour);
+  EEPROM.write(2960, dim_to_minute);
+
   commit();
 }
 
@@ -590,6 +609,26 @@ void loadSettingsFromEEPROM(bool first)
   } //last used: 2549
   EEPROM.write(2550, DMXStartLED);
   #endif
+
+  //Clock
+  clock_on = EEPROM.read(2551);
+  norm_brightness = EEPROM.read(2552);
+  dim_lights = EEPROM.read(2553);
+  dim_brightness = EEPROM.read(2554);
+  readStringFromEEPROM(2944, clock_hex_col, 8);
+  clock_col = color16bitFromDecOrHexString(clock_hex_col);
+  time_format = EEPROM.read(2555);
+  date_format = EEPROM.read(2556);
+  show_time = EEPROM.read(2557);
+  show_date = EEPROM.read(2558);
+  show_greeting = EEPROM.read(2559);
+  scroll_speed = EEPROM.read(2954);
+  opt_alt_speed = EEPROM.read(2955);
+  auto_dim = EEPROM.read(2956);
+  dim_from_hour = EEPROM.read(2957);
+  dim_from_minute = EEPROM.read(2958);
+  dim_to_hour = EEPROM.read(2959);
+  dim_to_minute = EEPROM.read(2960);
 
   //Usermod memory
   //2551 - 2559 reserved for Usermods, usable by default

@@ -198,6 +198,36 @@ void colorFromDecOrHexString(byte* rgb, char* in)
   rgb[2] =  c        & 0xFF;
 }
 
+uint16_t color16bitFromDecOrHexString(char* in)
+{
+  if (in[0] == 0) return 0;
+  char first = in[0];
+  uint32_t c = 0;
+  
+  if (first == '#' || first == 'h' || first == 'H') //is HEX encoded
+  {
+    c = strtoul(in +1, NULL, 16);
+  } else
+  {
+    c = strtoul(in, NULL, 10);
+  }
+byte rgb[4];
+
+  rgb[3] = (c >> 24) & 0xFF;
+  rgb[0] = (c >> 16) & 0xFF;
+  rgb[1] = (c >>  8) & 0xFF;
+  rgb[2] =  c        & 0xFF;
+  
+  return color16bit(rgb[0],rgb[1],rgb[2]);
+}
+// Downgrade 24-bit color to 16-bit (add reverse gamma lookup here?)
+uint16_t color16bit(uint8_t r, uint8_t g, uint8_t b)
+{
+  return ((uint16_t)(r & 0xF8) << 8) |
+         ((uint16_t)(g & 0xFC) << 3) |
+         (b >> 3);
+}
+
 float minf (float v, float w)
 {
   if (w > v) return v;

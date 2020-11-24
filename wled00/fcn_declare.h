@@ -38,6 +38,8 @@ void colorRGBtoXY(byte* rgb, float* xy); // only defined if huesync disabled TOD
 
 void colorFromDecOrHexString(byte* rgb, char* in);
 void colorRGBtoRGBW(byte* rgb); //rgb to rgbw (http://codewelt.com/rgbw). (RGBW_MODE_LEGACY)
+uint16_t color16bit(uint8_t r, uint8_t g, uint8_t b);
+uint16_t color16bitFromDecOrHexString(char* in);
 
 //dmx.cpp
 void initDMX();
@@ -187,6 +189,10 @@ void registerUsermods();
 void userSetup();
 void userConnected();
 void userLoop();
+void setClockColor(uint16_t color); 
+void setClockBrightness(uint8_t brightness);
+void turnOffClock();
+tmElements_t timeFromString(String t);
 
 //wled_eeprom.cpp
 void commit();
