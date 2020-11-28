@@ -306,6 +306,20 @@ const char PAGE_settings_dmx[] PROGMEM = R"=====()=====";
           .replace(/function GetV().*\<\/script\>/gms, "function GetV() {\n"),
     },
     {
+      file: "settings_clock.htm",
+      name: "PAGE_settings_clock",
+      prepend: "=====(",
+      append: ")=====",
+      method: "plaintext",
+      filter: "html-minify",
+      mangle: (str) =>
+        str
+          .replace(/\<link rel="stylesheet".*\>/gms, "")
+          .replace(/\<style\>.*\<\/style\>/gms, "%CSS%%SCSS%")
+          .replace(/function GetV().*\<\/script\>/gms, "function GetV() {var d=document;\n"),
+          
+    },
+    {
       file: "settings_sec.htm",
       name: "PAGE_settings_sec",
       prepend: "=====(",

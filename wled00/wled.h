@@ -23,11 +23,11 @@
 //#define WLED_DISABLE_OTA         // saves 14kb
 
 // You need to choose some of these features to disable:
-//#define WLED_DISABLE_ALEXA       // saves 11kb
-//#define WLED_DISABLE_BLYNK       // saves 6kb
-//#define WLED_DISABLE_CRONIXIE    // saves 3kb
-//#define WLED_DISABLE_HUESYNC     // saves 4kb
-//#define WLED_DISABLE_INFRARED    // there is no pin left for this on ESP8266-01, saves 12kb
+#define WLED_DISABLE_ALEXA       // saves 11kb
+#define WLED_DISABLE_BLYNK       // saves 6kb
+#define WLED_DISABLE_CRONIXIE    // saves 3kb
+#define WLED_DISABLE_HUESYNC     // saves 4kb
+#define WLED_DISABLE_INFRARED    // there is no pin left for this on ESP8266-01, saves 12kb
 #ifndef WLED_DISABLE_MQTT
   #define WLED_ENABLE_MQTT         // saves 12kb
 #endif
@@ -41,7 +41,7 @@
 #define WLED_ENABLE_FS_EDITOR      // enable /edit page for editing FS content. Will also be disabled with OTA lock
 
 // to toggle usb serial debug (un)comment the following line
-//#define WLED_DEBUG
+#define WLED_DEBUG
 
 // filesystem specific debugging
 //#define WLED_DEBUG_FS
@@ -189,9 +189,7 @@ WLED_GLOBAL char otaPass[33] _INIT(DEFAULT_OTA_PASS);
 WLED_GLOBAL byte auxDefaultState _INIT(0);                         // 0: input 1: high 2: low
 WLED_GLOBAL byte auxTriggeredState _INIT(0);                       // 0: input 1: high 2: low
 #endif
-WLED_GLOBAL char ntpServerName[33] _INIT("0.wled.pool.ntp.org");   // NTP server to use
-
-// WiFi CONFIG (all these can be changed via web UI, no need to set them here)
+WLED_GLOBAL char ntpServerName[33] _INIT("10.0.0.6");   // NTP server to use// WiFi CONFIG (all these can be changed via web UI, no need to set them here)
 WLED_GLOBAL char clientSSID[33] _INIT(CLIENT_SSID);
 WLED_GLOBAL char clientPass[65] _INIT(CLIENT_PASS);
 WLED_GLOBAL char cmDNS[33] _INIT("x");                             // mDNS address (placeholder, is replaced by wledXXXXXX.local)
@@ -224,7 +222,7 @@ WLED_GLOBAL bool skipFirstLed  _INIT(false);        // ignore first LED in strip
 WLED_GLOBAL byte briMultiplier _INIT(100);          // % of brightness to set (to limit power, if you set it to 50 and set bri to 255, actual brightness will be 127)
 
 // User Interface CONFIG
-WLED_GLOBAL char serverDescription[33] _INIT("WLED");  // Name of module
+WLED_GLOBAL char serverDescription[33] _INIT("Mirror");  // Name of module
 WLED_GLOBAL bool syncToggleReceive     _INIT(false);   // UIs which only have a single button for sync should toggle send+receive if this is true, only send otherwise
 
 // Sync CONFIG
@@ -329,6 +327,31 @@ WLED_GLOBAL uint16_t userVar0 _INIT(0), userVar1 _INIT(0); //available for use i
   WLED_GLOBAL uint16_t DMXStart _INIT(10);        // start address of the first fixture
   WLED_GLOBAL uint16_t DMXStartLED _INIT(0);      // LED from which DMX fixtures start
 #endif
+
+//Clock CONFIG
+
+
+WLED_GLOBAL bool clock_on _INIT(true); //Show Clock
+WLED_GLOBAL byte norm_brightness _INIT(255); //Clock brightness
+WLED_GLOBAL bool dim_lights _INIT(true); //Automatically dim Clock lights when turned off
+WLED_GLOBAL byte dim_brightness _INIT(7); //Clock brightness when dimmed
+WLED_GLOBAL char clock_hex_col[8] _INIT("#0000ff"); //Clock hex color
+WLED_GLOBAL uint16_t  clock_col _INIT(((uint16_t)(0 & 0xF8) << 8) |
+         ((uint16_t)(0 & 0xFC) << 3) |
+         (255 >> 3));  //Clock color
+WLED_GLOBAL byte time_format _INIT(0);         
+WLED_GLOBAL byte date_format _INIT(0);         
+WLED_GLOBAL bool show_time _INIT(1); 
+WLED_GLOBAL bool show_date _INIT(0); 
+WLED_GLOBAL bool show_greeting _INIT(0); 
+WLED_GLOBAL byte  scroll_speed _INIT(10);
+WLED_GLOBAL byte opt_alt_speed _INIT(3);
+WLED_GLOBAL bool auto_dim _INIT(1); 
+WLED_GLOBAL byte dim_from_hour _INIT(0);
+WLED_GLOBAL byte  dim_from_minute _INIT(0);
+WLED_GLOBAL byte dim_to_hour _INIT(0);
+WLED_GLOBAL byte  dim_to_minute _INIT(0);
+
 
 // internal global variable declarations
 // wifi

@@ -1,9 +1,12 @@
 //this code is a modified version of https://github.com/Makuna/NeoPixelBus/issues/103
+
+
 #ifndef NpbWrapper_h
 #define NpbWrapper_h
 
 //PIN CONFIGURATION
 #ifndef LEDPIN
+//LEDPIN variable is ignored in multipin mod. configure strip number output PIN variables instead: STRIP1_PIN, STRIP2_PIN, etc.
 #define LEDPIN 2  //strip pin. Any for ESP32, gpio2 or 3 is recommended for ESP8266 (gpio2/3 are labeled D4/RX on NodeMCU and Wemos)
 #endif
 //#define USE_APA102  // Uncomment for using APA102 LEDs.
@@ -26,11 +29,11 @@
 #endif
 
 #ifndef IR_PIN
-#define IR_PIN  4  //infrared pin (-1 to disable)  MagicHome: 4, H801 Wifi: 0
+#define IR_PIN -1 //infrared pin (-1 to disable)  MagicHome: 4, H801 Wifi: 0
 #endif
 
 #ifndef RLYPIN
-#define RLYPIN 12  //pin for relay, will be set HIGH if LEDs are on (-1 to disable). Also usable for standby leds, triggers,...
+#define RLYPIN -1  //pin for relay, will be set HIGH if LEDs are on (-1 to disable). Also usable for standby leds, triggers,...
 #endif
 
 #ifndef AUXPIN
@@ -41,7 +44,116 @@
 #define RLYMDE  1  //mode for relay, 0: LOW if LEDs are on 1: HIGH if LEDs are on
 #endif
 
+// How many strips will be connected. currently up to 8 strips is possible.
+#define NUM_STRIPS 7
+#define SHOW_CLOCK
+// multipin mod configuration:
+
+//Outside Count
+#define OC 198
+//Inside Count
+#define IC 166
+//Tower Outside Count
+#define TOC 36
+//Tower Inside Count
+#define TIC 28
+//Center Tower Count
+#define CTC 57
+//Matrix Count
+#define MC 256
+
+// What pins to use:
+#define STRIP1_PIN 12 //Outside
+#define STRIP2_PIN 14 //Inside
+#define STRIP3_PIN 27 //Left Tower Outside
+#define STRIP4_PIN 26 //Left Tower Inside
+#define STRIP5_PIN 15 //Right Tower Outside
+#define STRIP6_PIN 2 //Right Tower Inside
+#define STRIP7_PIN 0 //Center Tower
+#define STRIP8_PIN 4 //Matrix
+
+// How many LEDs are on each strip:
+#define STRIP1_LEDCOUNT OC
+#define STRIP2_LEDCOUNT IC
+#define STRIP3_LEDCOUNT TOC
+#define STRIP4_LEDCOUNT TIC
+#define STRIP5_LEDCOUNT TOC
+#define STRIP6_LEDCOUNT TIC
+#define STRIP7_LEDCOUNT CTC
+#define STRIP8_LEDCOUNT MC
+
+// What pixelmethod to use on each strip?
+#define STRIP1_PIXELMETHOD NeoEsp32Rmt0Ws2812xMethod    // the board specific PIXELMETHOD variable is being ignored now, so make sure it's set here!
+#define STRIP2_PIXELMETHOD NeoEsp32Rmt1Ws2812xMethod    // define what method you want to use to drive each strip. For esp32 RMT 0-7 works best.
+#define STRIP3_PIXELMETHOD NeoEsp32Rmt2Ws2812xMethod
+#define STRIP4_PIXELMETHOD NeoEsp32Rmt3Ws2812xMethod
+#define STRIP5_PIXELMETHOD NeoEsp32Rmt4Ws2812xMethod
+#define STRIP6_PIXELMETHOD NeoEsp32Rmt5Ws2812xMethod
+#define STRIP7_PIXELMETHOD NeoEsp32Rmt6Ws2812xMethod
+#define STRIP8_PIXELMETHOD NeoEsp32Rmt7Ws2812xMethod
+
+
 //END CONFIGURATION
+
+// do calculations to find the  starting LED index position of each strip:
+#define STRIP1_STARTLED 0
+#define STRIP2_STARTLED STRIP1_STARTLED + STRIP1_LEDCOUNT
+#define STRIP3_STARTLED STRIP2_STARTLED + STRIP2_LEDCOUNT
+#define STRIP4_STARTLED STRIP3_STARTLED + STRIP3_LEDCOUNT
+#define STRIP5_STARTLED STRIP4_STARTLED + STRIP4_LEDCOUNT
+#define STRIP6_STARTLED STRIP5_STARTLED + STRIP5_LEDCOUNT
+#define STRIP7_STARTLED STRIP6_STARTLED + STRIP6_LEDCOUNT
+#define STRIP8_STARTLED STRIP7_STARTLED + STRIP7_LEDCOUNT
+#define STRIP9_STARTLED STRIP8_STARTLED + STRIP8_LEDCOUNT // using this for calculation of strip8's end led
+
+// calculate the ending LED index of each strip:
+#define STRIP1_ENDLED STRIP2_STARTLED - 1
+#define STRIP2_ENDLED STRIP3_STARTLED - 1
+#define STRIP3_ENDLED STRIP4_STARTLED - 1
+#define STRIP4_ENDLED STRIP5_STARTLED - 1
+#define STRIP5_ENDLED STRIP6_STARTLED - 1
+#define STRIP6_ENDLED STRIP7_STARTLED - 1
+#define STRIP7_ENDLED STRIP8_STARTLED - 1
+#define STRIP8_ENDLED STRIP9_STARTLED - 1
+
+
+
+
+// find the total number of LEDs available in the physical system by reusing the math done above, then do strip 8 math
+#if NUM_STRIPS == 1
+#define NUM_LEDS STRIP2_STARTLED
+#endif
+
+#if NUM_STRIPS == 2
+#define NUM_LEDS STRIP3_STARTLED
+#endif
+
+#if NUM_STRIPS == 3
+#define NUM_LEDS STRIP4_STARTLED
+#endif
+
+#if NUM_STRIPS == 4
+#define NUM_LEDS STRIP5_STARTLED
+#endif
+
+#if NUM_STRIPS == 5
+#define NUM_LEDS STRIP6_STARTLED
+#endif
+
+#if NUM_STRIPS == 6
+#define NUM_LEDS STRIP7_STARTLED
+#endif
+
+#if NUM_STRIPS == 7
+#define NUM_LEDS STRIP8_STARTLED
+#endif
+
+#if NUM_STRIPS == 8
+#define NUM_LEDS STRIP9_STARTLED
+#endif
+
+
+//END calculations
 
 #if defined(USE_APA102) || defined(USE_WS2801) || defined(USE_LPD8806) || defined(USE_P9813)
  #ifndef CLKPIN
@@ -182,11 +294,53 @@ class NeoPixelWrapper
 public:
   NeoPixelWrapper() :
     // initialize each member to null
-    _pGrb(NULL),
-    _pGrbw(NULL),
+    _pGrb(NULL),     // strip1
+    #if NUM_STRIPS > 1
+      _pGrb2(NULL),  // strip2
+    #endif
+    #if NUM_STRIPS > 2
+      _pGrb3(NULL),  // strip3
+    #endif
+    #if NUM_STRIPS > 3
+      _pGrb4(NULL),  // strip4
+    #endif
+    #if NUM_STRIPS > 4
+      _pGrb5(NULL),  // strip5
+    #endif
+    #if NUM_STRIPS > 5
+      _pGrb6(NULL),  // strip6
+    #endif
+    #if NUM_STRIPS > 6
+      _pGrb7(NULL),  // strip7
+    #endif
+    #if NUM_STRIPS > 7
+      _pGrb8(NULL),  // strip8
+    #endif
+    _pGrbw(NULL),     // strip1
+    #if NUM_STRIPS > 1
+      _pGrbw2(NULL),  // strip2
+    #endif
+    #if NUM_STRIPS > 2
+      _pGrbw3(NULL),  // strip3
+    #endif
+    #if NUM_STRIPS > 3
+      _pGrbw4(NULL),  // strip4
+    #endif
+    #if NUM_STRIPS > 4
+      _pGrbw5(NULL),  // strip5
+    #endif
+    #if NUM_STRIPS > 5
+      _pGrbw6(NULL),  // strip6
+    #endif
+    #if NUM_STRIPS > 6
+      _pGrbw7(NULL),  // strip7
+    #endif
+    #if NUM_STRIPS > 7
+      _pGrbw8(NULL),  // strip8
+    #endif
     _type(NeoPixelType_None)
   {
-
+     
   }
 
   ~NeoPixelWrapper()
@@ -194,10 +348,13 @@ public:
     cleanup();
   }
 
+   
+
   void Begin(NeoPixelType type, uint16_t countPixels)
   {
     cleanup();
     _type = type;
+    //MatrixBegin();
 
     switch (_type)
     {
@@ -205,18 +362,76 @@ public:
       #if defined(USE_APA102) || defined(USE_WS2801) || defined(USE_LPD8806) || defined(USE_P9813)
         _pGrb = new NeoPixelBrightnessBus<PIXELFEATURE3,PIXELMETHOD>(countPixels, CLKPIN, DATAPIN);
       #else
-        _pGrb = new NeoPixelBrightnessBus<PIXELFEATURE3,PIXELMETHOD>(countPixels, LEDPIN);
+        _pGrb = new NeoPixelBrightnessBus<PIXELFEATURE3,STRIP1_PIXELMETHOD>(STRIP1_LEDCOUNT, STRIP1_PIN);     // strip1
+        _pGrb->Begin();  // strip1
+        #if NUM_STRIPS > 1
+          _pGrb2 = new NeoPixelBrightnessBus<PIXELFEATURE3, STRIP2_PIXELMETHOD>(STRIP2_LEDCOUNT, STRIP2_PIN); // strip2
+          _pGrb2->Begin(); // strip2
+        #endif
+        #if NUM_STRIPS > 2
+          _pGrb3 = new NeoPixelBrightnessBus<PIXELFEATURE3, STRIP3_PIXELMETHOD>(STRIP3_LEDCOUNT, STRIP3_PIN); // strip3
+          _pGrb3->Begin(); // strip3
+        #endif
+        #if NUM_STRIPS > 3
+          _pGrb4 = new NeoPixelBrightnessBus<PIXELFEATURE3, STRIP4_PIXELMETHOD>(STRIP4_LEDCOUNT, STRIP4_PIN); // strip4
+          _pGrb4->Begin(); // strip4
+        #endif
+        #if NUM_STRIPS > 4
+          _pGrb5 = new NeoPixelBrightnessBus<PIXELFEATURE3, STRIP5_PIXELMETHOD>(STRIP5_LEDCOUNT, STRIP5_PIN); // strip5
+          _pGrb5->Begin(); // strip5
+        #endif
+        #if NUM_STRIPS > 5
+          _pGrb6 = new NeoPixelBrightnessBus<PIXELFEATURE3, STRIP6_PIXELMETHOD>(STRIP6_LEDCOUNT, STRIP6_PIN); // strip6
+          _pGrb6->Begin(); // strip6
+        #endif
+        #if NUM_STRIPS > 6
+          _pGrb7 = new NeoPixelBrightnessBus<PIXELFEATURE3, STRIP7_PIXELMETHOD>(STRIP7_LEDCOUNT, STRIP7_PIN); // strip7
+          _pGrb7->Begin(); // strip7
+        #endif
+        #if NUM_STRIPS > 7
+          _pGrb8 = new NeoPixelBrightnessBus<PIXELFEATURE3, STRIP8_PIXELMETHOD>(STRIP8_LEDCOUNT, STRIP8_PIN); // strip8
+          _pGrb8->Begin(); // strip8
+        #endif
       #endif
-        _pGrb->Begin();
       break;
 
       case NeoPixelType_Grbw:
       #if defined(USE_APA102) || defined(USE_WS2801) || defined(USE_LPD8806) || defined(USE_P9813)
         _pGrbw = new NeoPixelBrightnessBus<PIXELFEATURE4,PIXELMETHOD>(countPixels, CLKPIN, DATAPIN);
       #else
-        _pGrbw = new NeoPixelBrightnessBus<PIXELFEATURE4,PIXELMETHOD>(countPixels, LEDPIN);
+       // _pGrbw = new NeoPixelBrightnessBus<PIXELFEATURE4,PIXELMETHOD>(countPixels, LEDPIN);
+        _pGrbw = new NeoPixelBrightnessBus<PIXELFEATURE4,STRIP1_PIXELMETHOD>(STRIP1_LEDCOUNT, STRIP1_PIN);     // strip1
+        _pGrbw->Begin();  // strip1
+        #if NUM_STRIPS > 1
+          _pGrbw2 = new NeoPixelBrightnessBus<PIXELFEATURE4, STRIP2_PIXELMETHOD>(STRIP2_LEDCOUNT, STRIP2_PIN); // strip2
+          _pGrbw2->Begin(); // strip2
+        #endif
+        #if NUM_STRIPS > 2
+          _pGrbw3 = new NeoPixelBrightnessBus<PIXELFEATURE4, STRIP3_PIXELMETHOD>(STRIP3_LEDCOUNT, STRIP3_PIN); // strip3
+          _pGrbw3->Begin(); // strip3
+        #endif
+        #if NUM_STRIPS > 3
+          _pGrbw4 = new NeoPixelBrightnessBus<PIXELFEATURE4, STRIP4_PIXELMETHOD>(STRIP4_LEDCOUNT, STRIP4_PIN); // strip4
+          _pGrbw4->Begin(); // strip4
+        #endif
+        #if NUM_STRIPS > 4
+          _pGrbw5 = new NeoPixelBrightnessBus<PIXELFEATURE4, STRIP5_PIXELMETHOD>(STRIP5_LEDCOUNT, STRIP5_PIN); // strip5
+          _pGrbw5->Begin(); // strip5
+        #endif
+        #if NUM_STRIPS > 5
+          _pGrbw6 = new NeoPixelBrightnessBus<PIXELFEATURE4, STRIP6_PIXELMETHOD>(STRIP6_LEDCOUNT, STRIP6_PIN); // strip6
+          _pGrbw6->Begin(); // strip6
+        #endif
+        #if NUM_STRIPS > 6
+          _pGrbw7 = new NeoPixelBrightnessBus<PIXELFEATURE4, STRIP7_PIXELMETHOD>(STRIP7_LEDCOUNT, STRIP7_PIN); // strip7
+          _pGrbw7->Begin(); // strip7
+        #endif
+        #if NUM_STRIPS > 7
+          _pGrbw8 = new NeoPixelBrightnessBus<PIXELFEATURE4, STRIP8_PIXELMETHOD>(STRIP8_LEDCOUNT, STRIP8_PIN); // strip8
+          _pGrbw8->Begin(); // strip8
+        #endif
       #endif
-        _pGrbw->Begin();
+        //_pGrbw->Begin();
       break;
     }
 
@@ -291,8 +506,57 @@ public:
     byte b;
     switch (_type)
     {
-      case NeoPixelType_Grb:  _pGrb->Show();  break;
-      case NeoPixelType_Grbw: _pGrbw->Show(); break;
+      case NeoPixelType_Grb:  {
+        _pGrb->Show();     //strip1
+        #if NUM_STRIPS > 1
+          _pGrb2->Show();  //strip2
+        #endif
+        #if NUM_STRIPS > 2
+          _pGrb3->Show();  //strip3
+        #endif
+        #if NUM_STRIPS > 3
+          _pGrb4->Show();  //strip4
+        #endif
+        #if NUM_STRIPS > 4
+          _pGrb5->Show();  //strip5
+        #endif
+        #if NUM_STRIPS > 5
+          _pGrb6->Show();  //strip6
+        #endif
+        #if NUM_STRIPS > 6
+          _pGrb7->Show();  //strip7
+        #endif
+        #if NUM_STRIPS > 7
+          _pGrb8->Show();  //strip8
+        #endif
+        break;
+      }
+      //case NeoPixelType_Grbw: _pGrbw->Show(); break;
+      case NeoPixelType_Grbw:  {
+        _pGrbw->Show();     //strip1
+        #if NUM_STRIPS > 1
+          _pGrbw2->Show();  //strip2
+        #endif
+        #if NUM_STRIPS > 2
+          _pGrbw3->Show();  //strip3
+        #endif
+        #if NUM_STRIPS > 3
+          _pGrbw4->Show();  //strip4
+        #endif
+        #if NUM_STRIPS > 4
+          _pGrbw5->Show();  //strip5
+        #endif
+        #if NUM_STRIPS > 5
+          _pGrbw6->Show();  //strip6
+        #endif
+        #if NUM_STRIPS > 6
+          _pGrbw7->Show();  //strip7
+        #endif
+        #if NUM_STRIPS > 7
+          _pGrbw8->Show();  //strip8
+        #endif
+        break;
+      }
     }
   }
 
@@ -300,16 +564,137 @@ public:
   {
     switch (_type) {
       case NeoPixelType_Grb: {
-        _pGrb->SetPixelColor(indexPixel, RgbColor(color.R,color.G,color.B));
+        // using the preprocessor math variables, assign the color to the correct LED on the correct strip based on its index
+        // calculate the strip specific location from the indexPixel provided, again re-using the math variables.
+        switch (indexPixel) {
+          case STRIP1_STARTLED ... STRIP1_ENDLED:
+            _pGrb->SetPixelColor(indexPixel, RgbColor(color.R,color.G,color.B));
+          break;
+          #if NUM_STRIPS > 1
+            case STRIP2_STARTLED ... STRIP2_ENDLED:
+              _pGrb2->SetPixelColor((indexPixel -= STRIP2_STARTLED), RgbColor(color.R,color.G,color.B));
+            break;
+          #endif
+          #if NUM_STRIPS > 2
+            case STRIP3_STARTLED ... STRIP3_ENDLED:
+              _pGrb3->SetPixelColor((indexPixel -= STRIP3_STARTLED), RgbColor(color.R,color.G,color.B));
+            break;
+          #endif
+          #if NUM_STRIPS > 3
+            case STRIP4_STARTLED ... STRIP4_ENDLED:
+              _pGrb4->SetPixelColor((indexPixel -= STRIP4_STARTLED), RgbColor(color.R,color.G,color.B));
+            break;
+          #endif
+          #if NUM_STRIPS > 4
+            case STRIP5_STARTLED ... STRIP5_ENDLED:
+              _pGrb5->SetPixelColor((indexPixel -= STRIP5_STARTLED), RgbColor(color.R,color.G,color.B));
+            break;
+          #endif
+          #if NUM_STRIPS > 5
+            case STRIP6_STARTLED ... STRIP6_ENDLED:
+              _pGrb6->SetPixelColor((indexPixel -= STRIP6_STARTLED), RgbColor(color.R,color.G,color.B));
+            break;
+          #endif
+          #if NUM_STRIPS > 6
+            case STRIP7_STARTLED ... STRIP7_ENDLED:
+              _pGrb7->SetPixelColor((indexPixel -= STRIP7_STARTLED), RgbColor(color.R,color.G,color.B));
+            break;
+          #endif
+          #if NUM_STRIPS > 7
+            case STRIP8_STARTLED ... STRIP8_ENDLED:
+              _pGrb8->SetPixelColor((indexPixel -= STRIP8_STARTLED), RgbColor(color.R,color.G,color.B));
+            break;
+          #endif
+        }
       }
       break;
       case NeoPixelType_Grbw: {
         #if defined(USE_LPD8806) || defined(USE_WS2801)
-        _pGrbw->SetPixelColor(indexPixel, RgbColor(color.R,color.G,color.B));
+        // _pGrbw->SetPixelColor(indexPixel, RgbColor(color.R,color.G,color.B));
+        switch (indexPixel) {
+          case STRIP1_STARTLED ... STRIP1_ENDLED:
+            _pGrbw->SetPixelColor(indexPixel, RgbColor(color.R,color.G,color.B));
+          break;
+          #if NUM_STRIPS > 1
+            case STRIP2_STARTLED ... STRIP2_ENDLED:
+              _pGrbw2->SetPixelColor((indexPixel -= STRIP2_STARTLED), RgbColor(color.R,color.G,color.B));
+            break;
+          #endif
+          #if NUM_STRIPS > 2
+            case STRIP3_STARTLED ... STRIP3_ENDLED:
+              _pGrbw3->SetPixelColor((indexPixel -= STRIP3_STARTLED), RgbColor(color.R,color.G,color.B));
+            break;
+          #endif
+          #if NUM_STRIPS > 3
+            case STRIP4_STARTLED ... STRIP4_ENDLED:
+              _pGrbw4->SetPixelColor((indexPixel -= STRIP4_STARTLED), RgbColor(color.R,color.G,color.B));
+            break;
+          #endif
+          #if NUM_STRIPS > 4
+            case STRIP5_STARTLED ... STRIP5_ENDLED:
+              _pGrbw5->SetPixelColor((indexPixel -= STRIP5_STARTLED), RgbColor(color.R,color.G,color.B));
+            break;
+          #endif
+          #if NUM_STRIPS > 5
+            case STRIP6_STARTLED ... STRIP6_ENDLED:
+              _pGrbw6->SetPixelColor((indexPixel -= STRIP6_STARTLED), RgbColor(color.R,color.G,color.B));
+            break;
+          #endif
+          #if NUM_STRIPS > 6
+            case STRIP7_STARTLED ... STRIP7_ENDLED:
+              _pGrbw7->SetPixelColor((indexPixel -= STRIP7_STARTLED), RgbColor(color.R,color.G,color.B));
+            break;
+          #endif
+          #if NUM_STRIPS > 7
+            case STRIP8_STARTLED ... STRIP8_ENDLED:
+              _pGrbw8->SetPixelColor((indexPixel -= STRIP8_STARTLED), RgbColor(color.R,color.G,color.B));
+            break;
+          #endif
+        }
         #else
-        _pGrbw->SetPixelColor(indexPixel, color);
-        #endif
+        // _pGrbw->SetPixelColor(indexPixel, color);
+        switch (indexPixel) {
+          case STRIP1_STARTLED ... STRIP1_ENDLED:
+            _pGrbw->SetPixelColor(indexPixel, color);
+          break;
+          #if NUM_STRIPS > 1
+            case STRIP2_STARTLED ... STRIP2_ENDLED:
+              _pGrbw2->SetPixelColor((indexPixel -= STRIP2_STARTLED), color);
+            break;
+          #endif
+          #if NUM_STRIPS > 2
+            case STRIP3_STARTLED ... STRIP3_ENDLED:
+              _pGrbw3->SetPixelColor((indexPixel -= STRIP3_STARTLED), color);
+            break;
+          #endif
+          #if NUM_STRIPS > 3
+            case STRIP4_STARTLED ... STRIP4_ENDLED:
+              _pGrbw4->SetPixelColor((indexPixel -= STRIP4_STARTLED), color);
+            break;
+          #endif
+          #if NUM_STRIPS > 4
+            case STRIP5_STARTLED ... STRIP5_ENDLED:
+              _pGrbw5->SetPixelColor((indexPixel -= STRIP5_STARTLED), color);
+            break;
+          #endif
+          #if NUM_STRIPS > 5
+            case STRIP6_STARTLED ... STRIP6_ENDLED:
+              _pGrbw6->SetPixelColor((indexPixel -= STRIP6_STARTLED), color);
+            break;
+          #endif
+          #if NUM_STRIPS > 6
+            case STRIP7_STARTLED ... STRIP7_ENDLED:
+              _pGrbw7->SetPixelColor((indexPixel -= STRIP7_STARTLED), color);
+            break;
+          #endif
+          #if NUM_STRIPS > 7
+            case STRIP8_STARTLED ... STRIP8_ENDLED:
+              _pGrbw8->SetPixelColor((indexPixel -= STRIP8_STARTLED), color);
+            break;
+          #endif
+        }
       }
+      #endif
       break;
     }
     
@@ -318,8 +703,57 @@ public:
   void SetBrightness(byte b)
   {
     switch (_type) {
-      case NeoPixelType_Grb: _pGrb->SetBrightness(b);   break;
-      case NeoPixelType_Grbw:_pGrbw->SetBrightness(b);  break;
+      case NeoPixelType_Grb: { 
+        _pGrb->SetBrightness(b);     //strip1
+        #if NUM_STRIPS > 1
+          _pGrb2->SetBrightness(b);  //strip2
+        #endif
+        #if NUM_STRIPS > 2
+          _pGrb3->SetBrightness(b);  //strip3
+        #endif
+        #if NUM_STRIPS > 3
+          _pGrb4->SetBrightness(b);  //strip4
+        #endif
+        #if NUM_STRIPS > 4
+          _pGrb5->SetBrightness(b);  //strip5
+        #endif
+        #if NUM_STRIPS > 5
+          _pGrb6->SetBrightness(b);  //strip6
+        #endif
+        #if NUM_STRIPS > 6
+          _pGrb7->SetBrightness(b);  //strip7
+        #endif
+        #if NUM_STRIPS > 7
+          _pGrb8->SetBrightness(b);  //strip8
+        #endif
+        break;
+      }
+      //case NeoPixelType_Grbw:_pGrbw->SetBrightness(b);  break;
+      case NeoPixelType_Grbw: { 
+        _pGrbw->SetBrightness(b);     //strip1
+        #if NUM_STRIPS > 1
+          _pGrbw2->SetBrightness(b);  //strip2
+        #endif
+        #if NUM_STRIPS > 2
+          _pGrbw3->SetBrightness(b);  //strip3
+        #endif
+        #if NUM_STRIPS > 3
+          _pGrbw4->SetBrightness(b);  //strip4
+        #endif
+        #if NUM_STRIPS > 4
+          _pGrbw5->SetBrightness(b);  //strip5
+        #endif
+        #if NUM_STRIPS > 5
+          _pGrbw6->SetBrightness(b);  //strip6
+        #endif
+        #if NUM_STRIPS > 6
+          _pGrbw7->SetBrightness(b);  //strip7
+        #endif
+        #if NUM_STRIPS > 7
+          _pGrbw8->SetBrightness(b);  //strip8
+        #endif
+        break;
+      }
     }
   }
 
@@ -328,13 +762,94 @@ public:
   RgbwColor GetPixelColorRgbw(uint16_t indexPixel) const
   {
     switch (_type) {
-      case NeoPixelType_Grb:  return _pGrb->GetPixelColor(indexPixel);  break;
-      case NeoPixelType_Grbw: return _pGrbw->GetPixelColor(indexPixel); break;
+      case NeoPixelType_Grb: 
+        switch (indexPixel) {
+          case STRIP1_STARTLED ... STRIP1_ENDLED:
+            return _pGrb->GetPixelColor(indexPixel);
+            break;
+          #if NUM_STRIPS > 1
+            case STRIP2_STARTLED ... STRIP2_ENDLED:
+              return _pGrb2->GetPixelColor((indexPixel -= STRIP2_STARTLED));
+              break;
+          #endif
+          #if NUM_STRIPS > 2
+            case STRIP3_STARTLED ... STRIP3_ENDLED:
+              return _pGrb3->GetPixelColor((indexPixel -= STRIP3_STARTLED));
+              break;
+          #endif
+          #if NUM_STRIPS > 3
+            case STRIP4_STARTLED ... STRIP4_ENDLED:
+              return _pGrb4->GetPixelColor((indexPixel -= STRIP4_STARTLED));
+              break;
+          #endif
+          #if NUM_STRIPS > 4
+            case STRIP5_STARTLED ... STRIP5_ENDLED:
+              return _pGrb5->GetPixelColor((indexPixel -= STRIP5_STARTLED));
+              break;
+          #endif
+          #if NUM_STRIPS > 5
+            case STRIP6_STARTLED ... STRIP6_ENDLED:
+              return _pGrb6->GetPixelColor((indexPixel -= STRIP6_STARTLED));
+              break;
+          #endif
+          #if NUM_STRIPS > 6
+            case STRIP7_STARTLED ... STRIP7_ENDLED:
+              return _pGrb7->GetPixelColor((indexPixel -= STRIP7_STARTLED));
+              break;
+          #endif
+          #if NUM_STRIPS > 7
+            case STRIP8_STARTLED ... STRIP8_ENDLED:
+              return _pGrb8->GetPixelColor((indexPixel -= STRIP8_STARTLED));
+              break;
+          #endif
+        }
+      // case NeoPixelType_Grbw: return _pGrbw->GetPixelColor(indexPixel); break;
+      case NeoPixelType_Grbw: 
+        switch (indexPixel) {
+          case STRIP1_STARTLED ... STRIP1_ENDLED:
+            return _pGrbw->GetPixelColor(indexPixel);
+            break;
+          #if NUM_STRIPS > 1
+            case STRIP2_STARTLED ... STRIP2_ENDLED:
+              return _pGrbw2->GetPixelColor((indexPixel -= STRIP2_STARTLED));
+              break;
+          #endif
+          #if NUM_STRIPS > 2
+            case STRIP3_STARTLED ... STRIP3_ENDLED:
+              return _pGrbw3->GetPixelColor((indexPixel -= STRIP3_STARTLED));
+              break;
+          #endif
+          #if NUM_STRIPS > 3
+            case STRIP4_STARTLED ... STRIP4_ENDLED:
+              return _pGrbw4->GetPixelColor((indexPixel -= STRIP4_STARTLED));
+              break;
+          #endif
+          #if NUM_STRIPS > 4
+            case STRIP5_STARTLED ... STRIP5_ENDLED:
+              return _pGrbw5->GetPixelColor((indexPixel -= STRIP5_STARTLED));
+              break;
+          #endif
+          #if NUM_STRIPS > 5
+            case STRIP6_STARTLED ... STRIP6_ENDLED:
+              return _pGrbw6->GetPixelColor((indexPixel -= STRIP6_STARTLED));
+              break;
+          #endif
+          #if NUM_STRIPS > 6
+            case STRIP7_STARTLED ... STRIP7_ENDLED:
+              return _pGrbw7->GetPixelColor((indexPixel -= STRIP7_STARTLED));
+              break;
+          #endif
+          #if NUM_STRIPS > 7
+            case STRIP8_STARTLED ... STRIP8_ENDLED:
+              return _pGrbw8->GetPixelColor((indexPixel -= STRIP8_STARTLED));
+              break;
+          #endif
+        }
     }
     return 0;
   }
 
-  uint8_t* GetPixels(void)
+  uint8_t* GetPixels(void)//GetPixels function wont work correctly in multistrip mod, as it will only return strip1's pixels!
   {
     switch (_type) {
       case NeoPixelType_Grb:  return _pGrb->Pixels();  break;
@@ -347,15 +862,109 @@ public:
 private:
   NeoPixelType _type;
 
+
   // have a member for every possible type
-  NeoPixelBrightnessBus<PIXELFEATURE3,PIXELMETHOD>*  _pGrb;
-  NeoPixelBrightnessBus<PIXELFEATURE4,PIXELMETHOD>* _pGrbw;
+  NeoPixelBrightnessBus<PIXELFEATURE3,STRIP1_PIXELMETHOD>*  _pGrb;     //strip1
+  #if NUM_STRIPS > 1
+    NeoPixelBrightnessBus<PIXELFEATURE3,STRIP2_PIXELMETHOD>*  _pGrb2;  //strip2
+  #endif
+  #if NUM_STRIPS > 2
+    NeoPixelBrightnessBus<PIXELFEATURE3,STRIP3_PIXELMETHOD>*  _pGrb3;  //strip3
+  #endif
+  #if NUM_STRIPS > 3
+    NeoPixelBrightnessBus<PIXELFEATURE3,STRIP4_PIXELMETHOD>*  _pGrb4;  //strip4
+  #endif
+  #if NUM_STRIPS > 4
+    NeoPixelBrightnessBus<PIXELFEATURE3,STRIP5_PIXELMETHOD>*  _pGrb5;  //strip5
+  #endif
+  #if NUM_STRIPS > 5
+    NeoPixelBrightnessBus<PIXELFEATURE3,STRIP6_PIXELMETHOD>*  _pGrb6;  //strip6
+  #endif
+  #if NUM_STRIPS > 6
+    NeoPixelBrightnessBus<PIXELFEATURE3,STRIP7_PIXELMETHOD>*  _pGrb7;  //strip7
+  #endif
+  #if NUM_STRIPS > 7
+    NeoPixelBrightnessBus<PIXELFEATURE3,STRIP8_PIXELMETHOD>*  _pGrb8;  //strip8
+  #endif
+  // NeoPixelBrightnessBus<PIXELFEATURE4,PIXELMETHOD>* _pGrbw;
+  NeoPixelBrightnessBus<PIXELFEATURE4,STRIP1_PIXELMETHOD>*  _pGrbw;     //strip1
+  #if NUM_STRIPS > 1
+    NeoPixelBrightnessBus<PIXELFEATURE4,STRIP2_PIXELMETHOD>*  _pGrbw2;  //strip2
+  #endif
+  #if NUM_STRIPS > 2
+    NeoPixelBrightnessBus<PIXELFEATURE4,STRIP3_PIXELMETHOD>*  _pGrbw3;  //strip3
+  #endif
+  #if NUM_STRIPS > 3
+    NeoPixelBrightnessBus<PIXELFEATURE4,STRIP4_PIXELMETHOD>*  _pGrbw4;  //strip4
+  #endif
+  #if NUM_STRIPS > 4
+    NeoPixelBrightnessBus<PIXELFEATURE4,STRIP5_PIXELMETHOD>*  _pGrbw5;  //strip5
+  #endif
+  #if NUM_STRIPS > 5
+    NeoPixelBrightnessBus<PIXELFEATURE4,STRIP6_PIXELMETHOD>*  _pGrbw6;  //strip6
+  #endif
+  #if NUM_STRIPS > 6
+    NeoPixelBrightnessBus<PIXELFEATURE4,STRIP7_PIXELMETHOD>*  _pGrbw7;  //strip7
+  #endif
+  #if NUM_STRIPS > 7
+    NeoPixelBrightnessBus<PIXELFEATURE4,STRIP8_PIXELMETHOD>*  _pGrbw8;  //strip8
+  #endif
 
   void cleanup()
   {
+    
     switch (_type) {
-      case NeoPixelType_Grb:  delete _pGrb ; _pGrb  = NULL; break;
-      case NeoPixelType_Grbw: delete _pGrbw; _pGrbw = NULL; break;
+      case NeoPixelType_Grb:  {
+        delete _pGrb ; _pGrb  = NULL;    //strip1
+        #if NUM_STRIPS > 1
+          delete _pGrb2 ; _pGrb2  = NULL;  //strip2
+        #endif
+        #if NUM_STRIPS > 2
+          delete _pGrb3 ; _pGrb3  = NULL;  //strip3
+        #endif
+        #if NUM_STRIPS > 3
+          delete _pGrb4 ; _pGrb4  = NULL;  //strip4
+        #endif
+        #if NUM_STRIPS > 4
+          delete _pGrb5 ; _pGrb5  = NULL;  //strip5
+        #endif
+        #if NUM_STRIPS > 5
+          delete _pGrb6 ; _pGrb6  = NULL;  //strip6
+        #endif
+        #if NUM_STRIPS > 6
+          delete _pGrb7 ; _pGrb7  = NULL;  //strip7
+        #endif
+        #if NUM_STRIPS > 7
+          delete _pGrb8 ; _pGrb8  = NULL;  //strip8
+        #endif
+        break;
+      }
+      // case NeoPixelType_Grbw: delete _pGrbw; _pGrbw = NULL; break;
+      case NeoPixelType_Grbw:  {
+        delete _pGrbw ; _pGrbw  = NULL;    //strip1
+        #if NUM_STRIPS > 1
+          delete _pGrbw2 ; _pGrbw2  = NULL;  //strip2
+        #endif
+        #if NUM_STRIPS > 2
+          delete _pGrbw3 ; _pGrbw3  = NULL;  //strip3
+        #endif
+        #if NUM_STRIPS > 3
+          delete _pGrbw4 ; _pGrbw4  = NULL;  //strip4
+        #endif
+        #if NUM_STRIPS > 4
+          delete _pGrbw5 ; _pGrbw5  = NULL;  //strip5
+        #endif
+        #if NUM_STRIPS > 5
+          delete _pGrbw6 ; _pGrbw6  = NULL;  //strip6
+        #endif
+        #if NUM_STRIPS > 6
+          delete _pGrbw7 ; _pGrbw7  = NULL;  //strip7
+        #endif
+        #if NUM_STRIPS > 7
+          delete _pGrbw8 ; _pGrbw8  = NULL;  //strip8
+        #endif
+        break;
+      }
     }
   }
 };
