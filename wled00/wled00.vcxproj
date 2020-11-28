@@ -127,7 +127,6 @@
     <ClInclude Include="mqtt.h" />
     <ClInclude Include="notify.h" />
     <ClInclude Include="NpbWrapper.h" />
-    <ClInclude Include="MirrorMatrix" />
     <ClInclude Include="ntp.h" />
     <ClInclude Include="overlay.h" />
     <ClInclude Include="palettes.h" />
