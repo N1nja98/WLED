@@ -1,6 +1,5 @@
 #include "wled.h"
 
-
 /*
  * Receives client input
  */
@@ -234,13 +233,6 @@ void handleSettingsSet(AsyncWebServerRequest *request, byte subPage)
     countdownMin = request->arg(F("CM")).toInt();
     countdownSec = request->arg(F("CS")).toInt();
 
-    for (int i=1;i<17;i++)
-    {
-      String a = "M"+String(i);
-      if (request->hasArg(a.c_str())) saveMacro(i,request->arg(a),false);
-    }
-
-    macroBoot = request->arg(F("MB")).toInt();
     macroAlexaOn = request->arg(F("A0")).toInt();
     macroAlexaOff = request->arg(F("A1")).toInt();
     macroButton = request->arg(F("MP")).toInt();
@@ -273,7 +265,7 @@ void handleSettingsSet(AsyncWebServerRequest *request, byte subPage)
   {
     if (request->hasArg(F("RS"))) //complete factory reset
     {
-      clearEEPROM();
+      WLED_FS.format();
       serveMessage(request, 200, F("All Settings erased."), F("Connect to WLED-AP to setup again"),255);
       doReboot = true;
     }
@@ -354,13 +346,7 @@ void handleSettingsSet(AsyncWebServerRequest *request, byte subPage)
     scroll_speed = (byte)((request->arg(F("TSS")).toInt()) / 10);
     opt_alt_speed = (byte)((request->arg(F("OAC")).toInt()));
     auto_dim = (bool)request->hasArg(F("AD"));
-    DEBUG_PRINT("request->arg(F(DCF)):");
-    DEBUG_PRINTLN(request->arg(F("DCF")));
     tmElements_t t = timeFromString(request->arg(F("DCF")));
-    DEBUG_PRINT("t.Hour:");
-    DEBUG_PRINTLN(t.Hour);
-    DEBUG_PRINT("t.Minute:");
-    DEBUG_PRINTLN(t.Minute);
     dim_from_hour = t.Hour;
     dim_from_minute = t.Minute;
 
@@ -371,7 +357,7 @@ void handleSettingsSet(AsyncWebServerRequest *request, byte subPage)
   }
 
   
-  if (subPage != 6 || !doReboot) saveSettingsToEEPROM(); //do not save if factory reset
+  if (subPage != 6 || !doReboot) serializeConfig(); //do not save if factory reset
   if (subPage == 2) {
     strip.init(useRGBW,ledCount,skipFirstLed);
   }
@@ -418,38 +404,13 @@ bool updateVal(const String* req, const char* key, byte* val, byte minv, byte ma
 
 
 //HTTP API request parser
-bool handleSet(AsyncWebServerRequest *request, const String& req)
+bool handleSet(AsyncWebServerRequest *request, const String& req, bool apply)
 {
   if (!(req.indexOf("win") >= 0)) return false;
 
   int pos = 0;
   DEBUG_PRINT(F("API req: "));
   DEBUG_PRINTLN(req);
-
-  //write presets and macros saved to flash directly?
-  bool persistSaves = true;
-  pos = req.indexOf(F("NP"));
-  if (pos > 0) {
-    persistSaves = false;
-  }
-
-  //save macro, requires &MS=<slot>(<macro>) format
-  pos = req.indexOf(F("&MS="));
-  if (pos > 0) {
-    int i = req.substring(pos + 4).toInt();
-    pos = req.indexOf('(') +1;
-    if (pos > 0) {
-      int en = req.indexOf(')');
-      String mc = req.substring(pos);
-      if (en > 0) mc = req.substring(pos, en);
-      saveMacro(i, mc, persistSaves);
-    }
-
-    pos = req.indexOf(F("IN"));
-    if (pos < 1) XML_response(request);
-    return true;
-    //if you save a macro in one request, other commands in that request are ignored due to unwanted behavior otherwise
-  }
 
   strip.applyToAllSelected = true;
 
@@ -529,15 +490,12 @@ bool handleSet(AsyncWebServerRequest *request, const String& req)
     if (v > 100) presetCycleTime = v/100;
   }
 
-  pos = req.indexOf(F("PA=")); //apply brightness from preset
-  if (pos > 0) presetApplyBri = (req.charAt(pos+3) != '0');
-
   pos = req.indexOf(F("PS=")); //saves current in preset
-  if (pos > 0) savePreset(getNumVal(&req, pos), persistSaves);
+  if (pos > 0) savePreset(getNumVal(&req, pos));
 
   //apply preset
   if (updateVal(&req, "PL=", &presetCycCurr, presetCycleMin, presetCycleMax)) {
-    applyPreset(presetCycCurr, presetApplyBri);
+    applyPreset(presetCycCurr);
   }
 
   //set brightness
@@ -638,10 +596,10 @@ bool handleSet(AsyncWebServerRequest *request, const String& req)
     overlayCurrent = getNumVal(&req, pos);
   }
 
-  //apply macro
+  //apply macro (deprecated, added for compatibility with pre-0.11 automations)
   pos = req.indexOf(F("&M="));
   if (pos > 0) {
-    applyMacro(getNumVal(&req, pos));
+    applyPreset(getNumVal(&req, pos) + 16);
   }
 
   //toggle send UDP direct notifications
@@ -789,6 +747,8 @@ bool handleSet(AsyncWebServerRequest *request, const String& req)
   }
   //you can add more if you need
 
+  if (!apply) return true; //when called by JSON API, do not call colorUpdated() here
+  
   //internal call, does not send XML response
   pos = req.indexOf(F("IN"));
   if (pos < 1) XML_response(request);
