@@ -345,6 +345,26 @@ void loadSettingsFromEEPROM()
   DMXStartLED = EEPROM.read(2550);
   #endif
 
+  //Clock
+  clock_on = EEPROM.read(2551);
+  norm_brightness = EEPROM.read(2552);
+  dim_lights = EEPROM.read(2553);
+  dim_brightness = EEPROM.read(2554);
+  readStringFromEEPROM(2944, clock_hex_col, 8);
+  clock_col = color16bitFromDecOrHexString(clock_hex_col);
+  time_format = EEPROM.read(2555);
+  date_format = EEPROM.read(2556);
+  show_time = EEPROM.read(2557);
+  show_date = EEPROM.read(2558);
+  show_greeting = EEPROM.read(2559);
+  scroll_speed = EEPROM.read(2954);
+  opt_alt_speed = EEPROM.read(2955);
+  auto_dim = EEPROM.read(2956);
+  dim_from_hour = EEPROM.read(2957);
+  dim_from_minute = EEPROM.read(2958);
+  dim_to_hour = EEPROM.read(2959);
+  dim_to_minute = EEPROM.read(2960);
+
   //Usermod memory
   //2551 - 2559 reserved for Usermods, usable by default
   //2560 - 2943 usable, NOT reserved (need to increase EEPSIZE accordingly, new WLED core features may override this section)
