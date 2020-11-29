@@ -44,54 +44,12 @@
 #define RLYMDE  1  //mode for relay, 0: LOW if LEDs are on 1: HIGH if LEDs are on
 #endif
 
-// How many strips will be connected. currently up to 8 strips is possible.
-#define NUM_STRIPS 7
-#define SHOW_CLOCK
-// multipin mod configuration:
-
-//Outside Count
-#define OC 198
-//Inside Count
-#define IC 166
-//Tower Outside Count
-#define TOC 36
-//Tower Inside Count
-#define TIC 28
-//Center Tower Count
-#define CTC 57
-//Matrix Count
-#define MC 256
-
-// What pins to use:
-#define STRIP1_PIN 12 //Outside
-#define STRIP2_PIN 14 //Inside
-#define STRIP3_PIN 27 //Left Tower Outside
-#define STRIP4_PIN 26 //Left Tower Inside
-#define STRIP5_PIN 15 //Right Tower Outside
-#define STRIP6_PIN 2 //Right Tower Inside
-#define STRIP7_PIN 0 //Center Tower
-#define STRIP8_PIN 4 //Matrix
-
-// How many LEDs are on each strip:
-#define STRIP1_LEDCOUNT OC
-#define STRIP2_LEDCOUNT IC
-#define STRIP3_LEDCOUNT TOC
-#define STRIP4_LEDCOUNT TIC
-#define STRIP5_LEDCOUNT TOC
-#define STRIP6_LEDCOUNT TIC
-#define STRIP7_LEDCOUNT CTC
-#define STRIP8_LEDCOUNT MC
-
-// What pixelmethod to use on each strip?
-#define STRIP1_PIXELMETHOD NeoEsp32Rmt0Ws2812xMethod    // the board specific PIXELMETHOD variable is being ignored now, so make sure it's set here!
-#define STRIP2_PIXELMETHOD NeoEsp32Rmt1Ws2812xMethod    // define what method you want to use to drive each strip. For esp32 RMT 0-7 works best.
-#define STRIP3_PIXELMETHOD NeoEsp32Rmt2Ws2812xMethod
-#define STRIP4_PIXELMETHOD NeoEsp32Rmt3Ws2812xMethod
-#define STRIP5_PIXELMETHOD NeoEsp32Rmt4Ws2812xMethod
-#define STRIP6_PIXELMETHOD NeoEsp32Rmt5Ws2812xMethod
-#define STRIP7_PIXELMETHOD NeoEsp32Rmt6Ws2812xMethod
-#define STRIP8_PIXELMETHOD NeoEsp32Rmt7Ws2812xMethod
-
+//enable color order override for a specific range of the strip
+//This can be useful if you want to chain multiple strings with incompatible color order
+//#define COLOR_ORDER_OVERRIDE
+#define COO_MIN    0
+#define COO_MAX   27 //not inclusive, this would set the override for LEDs 0-26
+#define COO_ORDER COL_ORDER_GRB
 
 //END CONFIGURATION
 
@@ -280,6 +238,7 @@
 
 
 #include <NeoPixelBrightnessBus.h>
+#include "const.h"
 
 enum NeoPixelType
 {
@@ -560,144 +519,42 @@ public:
     }
   }
 
-  void SetPixelColor(uint16_t indexPixel, RgbwColor color)
+  void SetPixelColor(uint16_t indexPixel, RgbwColor c)
   {
+    RgbwColor col;
+
+    uint8_t co = _colorOrder;
+    #ifdef COLOR_ORDER_OVERRIDE
+    if (indexPixel >= COO_MIN && indexPixel < COO_MAX) co = COO_ORDER;
+    #endif
+
+    //reorder channels to selected order
+    switch (co)
+    {
+      case  0: col.G = c.G; col.R = c.R; col.B = c.B; break; //0 = GRB, default
+      case  1: col.G = c.R; col.R = c.G; col.B = c.B; break; //1 = RGB, common for WS2811
+      case  2: col.G = c.B; col.R = c.R; col.B = c.G; break; //2 = BRG
+      case  3: col.G = c.R; col.R = c.B; col.B = c.G; break; //3 = RBG
+      case  4: col.G = c.B; col.R = c.G; col.B = c.R; break; //4 = BGR
+      default: col.G = c.G; col.R = c.B; col.B = c.R; break; //5 = GBR
+    }
+    col.W = c.W;
+
     switch (_type) {
       case NeoPixelType_Grb: {
-        // using the preprocessor math variables, assign the color to the correct LED on the correct strip based on its index
-        // calculate the strip specific location from the indexPixel provided, again re-using the math variables.
-        switch (indexPixel) {
-          case STRIP1_STARTLED ... STRIP1_ENDLED:
-            _pGrb->SetPixelColor(indexPixel, RgbColor(color.R,color.G,color.B));
-          break;
-          #if NUM_STRIPS > 1
-            case STRIP2_STARTLED ... STRIP2_ENDLED:
-              _pGrb2->SetPixelColor((indexPixel -= STRIP2_STARTLED), RgbColor(color.R,color.G,color.B));
-            break;
-          #endif
-          #if NUM_STRIPS > 2
-            case STRIP3_STARTLED ... STRIP3_ENDLED:
-              _pGrb3->SetPixelColor((indexPixel -= STRIP3_STARTLED), RgbColor(color.R,color.G,color.B));
-            break;
-          #endif
-          #if NUM_STRIPS > 3
-            case STRIP4_STARTLED ... STRIP4_ENDLED:
-              _pGrb4->SetPixelColor((indexPixel -= STRIP4_STARTLED), RgbColor(color.R,color.G,color.B));
-            break;
-          #endif
-          #if NUM_STRIPS > 4
-            case STRIP5_STARTLED ... STRIP5_ENDLED:
-              _pGrb5->SetPixelColor((indexPixel -= STRIP5_STARTLED), RgbColor(color.R,color.G,color.B));
-            break;
-          #endif
-          #if NUM_STRIPS > 5
-            case STRIP6_STARTLED ... STRIP6_ENDLED:
-              _pGrb6->SetPixelColor((indexPixel -= STRIP6_STARTLED), RgbColor(color.R,color.G,color.B));
-            break;
-          #endif
-          #if NUM_STRIPS > 6
-            case STRIP7_STARTLED ... STRIP7_ENDLED:
-              _pGrb7->SetPixelColor((indexPixel -= STRIP7_STARTLED), RgbColor(color.R,color.G,color.B));
-            break;
-          #endif
-          #if NUM_STRIPS > 7
-            case STRIP8_STARTLED ... STRIP8_ENDLED:
-              _pGrb8->SetPixelColor((indexPixel -= STRIP8_STARTLED), RgbColor(color.R,color.G,color.B));
-            break;
-          #endif
-        }
+        _pGrb->SetPixelColor(indexPixel, RgbColor(col.R,col.G,col.B));
       }
       break;
       case NeoPixelType_Grbw: {
         #if defined(USE_LPD8806) || defined(USE_WS2801)
-        // _pGrbw->SetPixelColor(indexPixel, RgbColor(color.R,color.G,color.B));
-        switch (indexPixel) {
-          case STRIP1_STARTLED ... STRIP1_ENDLED:
-            _pGrbw->SetPixelColor(indexPixel, RgbColor(color.R,color.G,color.B));
-          break;
-          #if NUM_STRIPS > 1
-            case STRIP2_STARTLED ... STRIP2_ENDLED:
-              _pGrbw2->SetPixelColor((indexPixel -= STRIP2_STARTLED), RgbColor(color.R,color.G,color.B));
-            break;
-          #endif
-          #if NUM_STRIPS > 2
-            case STRIP3_STARTLED ... STRIP3_ENDLED:
-              _pGrbw3->SetPixelColor((indexPixel -= STRIP3_STARTLED), RgbColor(color.R,color.G,color.B));
-            break;
-          #endif
-          #if NUM_STRIPS > 3
-            case STRIP4_STARTLED ... STRIP4_ENDLED:
-              _pGrbw4->SetPixelColor((indexPixel -= STRIP4_STARTLED), RgbColor(color.R,color.G,color.B));
-            break;
-          #endif
-          #if NUM_STRIPS > 4
-            case STRIP5_STARTLED ... STRIP5_ENDLED:
-              _pGrbw5->SetPixelColor((indexPixel -= STRIP5_STARTLED), RgbColor(color.R,color.G,color.B));
-            break;
-          #endif
-          #if NUM_STRIPS > 5
-            case STRIP6_STARTLED ... STRIP6_ENDLED:
-              _pGrbw6->SetPixelColor((indexPixel -= STRIP6_STARTLED), RgbColor(color.R,color.G,color.B));
-            break;
-          #endif
-          #if NUM_STRIPS > 6
-            case STRIP7_STARTLED ... STRIP7_ENDLED:
-              _pGrbw7->SetPixelColor((indexPixel -= STRIP7_STARTLED), RgbColor(color.R,color.G,color.B));
-            break;
-          #endif
-          #if NUM_STRIPS > 7
-            case STRIP8_STARTLED ... STRIP8_ENDLED:
-              _pGrbw8->SetPixelColor((indexPixel -= STRIP8_STARTLED), RgbColor(color.R,color.G,color.B));
-            break;
-          #endif
-        }
+        _pGrbw->SetPixelColor(indexPixel, RgbColor(col.R,col.G,col.B));
         #else
-        // _pGrbw->SetPixelColor(indexPixel, color);
-        switch (indexPixel) {
-          case STRIP1_STARTLED ... STRIP1_ENDLED:
-            _pGrbw->SetPixelColor(indexPixel, color);
-          break;
-          #if NUM_STRIPS > 1
-            case STRIP2_STARTLED ... STRIP2_ENDLED:
-              _pGrbw2->SetPixelColor((indexPixel -= STRIP2_STARTLED), color);
-            break;
-          #endif
-          #if NUM_STRIPS > 2
-            case STRIP3_STARTLED ... STRIP3_ENDLED:
-              _pGrbw3->SetPixelColor((indexPixel -= STRIP3_STARTLED), color);
-            break;
-          #endif
-          #if NUM_STRIPS > 3
-            case STRIP4_STARTLED ... STRIP4_ENDLED:
-              _pGrbw4->SetPixelColor((indexPixel -= STRIP4_STARTLED), color);
-            break;
-          #endif
-          #if NUM_STRIPS > 4
-            case STRIP5_STARTLED ... STRIP5_ENDLED:
-              _pGrbw5->SetPixelColor((indexPixel -= STRIP5_STARTLED), color);
-            break;
-          #endif
-          #if NUM_STRIPS > 5
-            case STRIP6_STARTLED ... STRIP6_ENDLED:
-              _pGrbw6->SetPixelColor((indexPixel -= STRIP6_STARTLED), color);
-            break;
-          #endif
-          #if NUM_STRIPS > 6
-            case STRIP7_STARTLED ... STRIP7_ENDLED:
-              _pGrbw7->SetPixelColor((indexPixel -= STRIP7_STARTLED), color);
-            break;
-          #endif
-          #if NUM_STRIPS > 7
-            case STRIP8_STARTLED ... STRIP8_ENDLED:
-              _pGrbw8->SetPixelColor((indexPixel -= STRIP8_STARTLED), color);
-            break;
-          #endif
-        }
+        _pGrbw->SetPixelColor(indexPixel, col);
+        #endif
       }
       #endif
       break;
-    }
-    
+    } 
   }
 
   void SetBrightness(byte b)
@@ -757,9 +614,15 @@ public:
     }
   }
 
-  // NOTE:  Due to feature differences, some support RGBW but the method name
-  // here needs to be unique, thus GetPixeColorRgbw
-  RgbwColor GetPixelColorRgbw(uint16_t indexPixel) const
+  void SetColorOrder(byte colorOrder) {
+    _colorOrder = colorOrder;
+  }
+
+  uint8_t GetColorOrder() {
+    return _colorOrder;
+  }
+
+  RgbwColor GetPixelColorRaw(uint16_t indexPixel) const
   {
     switch (_type) {
       case NeoPixelType_Grb: 
@@ -849,7 +712,35 @@ public:
     return 0;
   }
 
-  uint8_t* GetPixels(void)//GetPixels function wont work correctly in multistrip mod, as it will only return strip1's pixels!
+  // NOTE:  Due to feature differences, some support RGBW but the method name
+  // here needs to be unique, thus GetPixeColorRgbw
+  uint32_t GetPixelColorRgbw(uint16_t indexPixel) const
+  {
+    RgbwColor col(0,0,0,0);
+    switch (_type) {
+      case NeoPixelType_Grb:  col = _pGrb->GetPixelColor(indexPixel);  break;
+      case NeoPixelType_Grbw: col = _pGrbw->GetPixelColor(indexPixel); break;
+    }
+
+    uint8_t co = _colorOrder;
+    #ifdef COLOR_ORDER_OVERRIDE
+    if (indexPixel >= COO_MIN && indexPixel < COO_MAX) co = COO_ORDER;
+    #endif
+
+    switch (co)
+    {
+      //                    W               G              R               B
+      case  0: return ((col.W << 24) | (col.G << 8) | (col.R << 16) | (col.B)); //0 = GRB, default
+      case  1: return ((col.W << 24) | (col.R << 8) | (col.G << 16) | (col.B)); //1 = RGB, common for WS2811
+      case  2: return ((col.W << 24) | (col.B << 8) | (col.R << 16) | (col.G)); //2 = BRG
+      case  3: return ((col.W << 24) | (col.B << 8) | (col.G << 16) | (col.R)); //3 = RBG
+      case  4: return ((col.W << 24) | (col.R << 8) | (col.B << 16) | (col.G)); //4 = BGR
+      case  5: return ((col.W << 24) | (col.G << 8) | (col.B << 16) | (col.R)); //5 = GBR
+    }
+    return 0;
+  }
+
+  uint8_t* GetPixels(void)
   {
     switch (_type) {
       case NeoPixelType_Grb:  return _pGrb->Pixels();  break;
@@ -909,6 +800,8 @@ private:
   #if NUM_STRIPS > 7
     NeoPixelBrightnessBus<PIXELFEATURE4,STRIP8_PIXELMETHOD>*  _pGrbw8;  //strip8
   #endif
+
+  byte _colorOrder = 0;
 
   void cleanup()
   {
