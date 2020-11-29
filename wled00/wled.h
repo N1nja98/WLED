@@ -41,7 +41,7 @@
 #define WLED_ENABLE_FS_EDITOR      // enable /edit page for editing FS content. Will also be disabled with OTA lock
 
 // to toggle usb serial debug (un)comment the following line
-#define WLED_DEBUG
+//#define WLED_DEBUG
 
 // filesystem specific debugging
 //#define WLED_DEBUG_FS
@@ -189,7 +189,9 @@ WLED_GLOBAL char otaPass[33] _INIT(DEFAULT_OTA_PASS);
 WLED_GLOBAL byte auxDefaultState _INIT(0);                         // 0: input 1: high 2: low
 WLED_GLOBAL byte auxTriggeredState _INIT(0);                       // 0: input 1: high 2: low
 #endif
-WLED_GLOBAL char ntpServerName[33] _INIT("10.0.0.6");   // NTP server to use// WiFi CONFIG (all these can be changed via web UI, no need to set them here)
+WLED_GLOBAL char ntpServerName[33] _INIT("10.0.0.6");   // NTP server to use
+
+// WiFi CONFIG (all these can be changed via web UI, no need to set them here)
 WLED_GLOBAL char clientSSID[33] _INIT(CLIENT_SSID);
 WLED_GLOBAL char clientPass[65] _INIT(CLIENT_PASS);
 WLED_GLOBAL char cmDNS[33] _INIT("x");                             // mDNS address (placeholder, is replaced by wledXXXXXX.local)

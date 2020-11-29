@@ -451,9 +451,6 @@ class WS2812FX {
     void
       init(bool supportWhite, uint16_t countPixels, bool skipFirst),
       service(void),
-
-      Print_Time(String,bool,bool),
-
       blur(uint8_t),
       fill(uint32_t),
       fade_out(uint8_t r),
