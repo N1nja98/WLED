@@ -319,7 +319,7 @@ void deserializeConfig() {
   CJSON(norm_brightness, clock[F("norm_brightness")]); 
   CJSON(dim_lights, clock[F("dim_lights")]); 
   CJSON(dim_brightness, clock[F("dim_brightness")]); 
-  CJSON(clock_hex_col, clock[F("clock_hex_col")]); 
+  getStringFromJson(clock_hex_col, clock[F("clock_hex_col")], 8);
   CJSON(time_format, clock[F("time_format")]); 
   CJSON(date_format, clock[F("date_format")]); 
   CJSON(show_time, clock[F("show_time")]); 
