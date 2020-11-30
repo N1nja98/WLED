@@ -466,7 +466,7 @@ void getSettingsJS(byte subPage, char* dest)
     sappend('c',SET_F("ST"),show_time);
     sappend('c',SET_F("SD"),show_date);
     sappend('c',SET_F("SG"),show_greeting);
-    sappend('v', SET_F("TSS"), (scroll_speed * 10));
+    sappend('v', SET_F("TSS"), (scroll_speed));
     sappend('v', SET_F("OAC"), (opt_alt_speed));
     sappend('c', SET_F("AD"), (auto_dim));
 

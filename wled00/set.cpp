@@ -343,7 +343,7 @@ void handleSettingsSet(AsyncWebServerRequest *request, byte subPage)
     show_time = (bool)request->hasArg(F("ST"));
     show_date = (bool)request->hasArg(F("SD"));
     show_greeting = (bool)request->hasArg(F("SG"));
-    scroll_speed = (byte)((request->arg(F("TSS")).toInt()) / 10);
+    scroll_speed = (byte)((request->arg(F("TSS")).toInt()));
     opt_alt_speed = (byte)((request->arg(F("OAC")).toInt()));
     auto_dim = (bool)request->hasArg(F("AD"));
     tmElements_t t = timeFromString(request->arg(F("DCF")));

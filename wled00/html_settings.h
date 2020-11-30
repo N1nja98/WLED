@@ -350,9 +350,9 @@ id="clock_brightness" name="CB" type="number" min="0" max="255" required>
 name="CHC"><br><br><h3>Options</h3>Show time: <input type="checkbox" name="ST">
 <br>Show date: <input type="checkbox" name="SD"><br>Show greeting: <input 
 type="checkbox" name="SG"><br><br>Option alternating speed: <input 
-id="scroll_speed" name="OAC" type="number" min="1" max="240" required>
- (1-240 seconds)<br><br>Text scroll speed: <input id="scroll_speed" name="TSS" 
-type="number" min="10" max="2500" required> (10-2500 milliseconds)<br><br><h3>
+id="opt_alt_speed" name="OAC" type="number" min="1" max="3600" required>
+ (1-3600 seconds)<br><br>Text scroll speed: <input id="scroll_speed" name="TSS" 
+type="number" min="1" max="5000" required> (1-5000 milliseconds)<br><br><h3>
 Dimming</h3>Dim lights when turned off: <input type="checkbox" name="DL"><br>
 Dimmed brightness: <input id="dim_brightness" name="DB" type="number" min="0" 
 max="255" required> (0-255)<br>Auto dim at night: <input type="checkbox" 
