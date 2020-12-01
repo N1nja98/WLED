@@ -185,7 +185,7 @@ void getSettingsJS(byte subPage, char* dest)
   obuf = dest;
   olen = 0;
 
-  if (subPage <1 || subPage >7) return;
+  if (subPage <1 || subPage >8) return;
 
   if (subPage == 1) {
     sappends('s',SET_F("CS"),clientSSID);
@@ -454,5 +454,40 @@ void getSettingsJS(byte subPage, char* dest)
     sappend('i',SET_F("CH15"),DMXFixtureMap[14]);
     }
   #endif
+  if (subPage == 8)
+  {
+    sappend('c',SET_F("TOC"),clock_on);
+    sappend('v',SET_F("CB"),norm_brightness);
+    sappend('c',SET_F("DL"),dim_lights);
+    sappend('v',SET_F("DB"),dim_brightness);
+    sappends('s',SET_F("CHC"),clock_hex_col);
+    sappend('v',SET_F("TF"),time_format);
+    sappend('v',SET_F("DTF"),date_format);
+    sappend('c',SET_F("ST"),show_time);
+    sappend('c',SET_F("SD"),show_date);
+    sappend('c',SET_F("SG"),show_greeting);
+    sappend('v', SET_F("TSS"), (scroll_speed));
+    sappend('v', SET_F("OAC"), (opt_alt_speed));
+    sappend('c', SET_F("AD"), (auto_dim));
+
+    String d;
+    d += dim_from_hour;
+    d += ":";
+    d += (dim_from_minute > 9) ? dim_to_minute : "0" + (String)dim_from_minute;
+
+    DEBUG_PRINT("Dim from:");
+    DEBUG_PRINTLN(d);
+
+    sappends('s', SET_F("DCF"), (char *)d.c_str());
+
+    d = dim_to_hour;
+    d += ":";
+    d += (dim_to_minute > 9) ? dim_to_minute : "0" + (String)dim_to_minute;
+
+    DEBUG_PRINT("Dim to:");
+    DEBUG_PRINTLN(d);
+    sappends('s',SET_F("DCT"),(char*)d.c_str());
+
+  }
   oappend(SET_F("}</script>"));
 }

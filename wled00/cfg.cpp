@@ -314,6 +314,25 @@ void deserializeConfig() {
   }
   #endif
 
+  JsonObject clock = doc["clock"];;
+  CJSON(clock_on, clock[F("on")]); 
+  CJSON(norm_brightness, clock[F("norm_brightness")]); 
+  CJSON(dim_lights, clock[F("dim_lights")]); 
+  CJSON(dim_brightness, clock[F("dim_brightness")]); 
+  getStringFromJson(clock_hex_col, clock[F("clock_hex_col")], 8);
+  CJSON(time_format, clock[F("time_format")]); 
+  CJSON(date_format, clock[F("date_format")]); 
+  CJSON(show_time, clock[F("show_time")]); 
+  CJSON(show_date, clock[F("show_date")]); 
+  CJSON(show_greeting, clock[F("show_greeting")]); 
+  CJSON(scroll_speed, clock[F("scroll_speed")]); 
+  CJSON(opt_alt_speed, clock[F("opt_alt_speed")]); 
+  CJSON(auto_dim, clock[F("auto_dim")]); 
+  CJSON(dim_from_hour, clock[F("dim_from_hour")]); 
+  CJSON(dim_from_minute, clock[F("dim_from_minute")]); 
+  CJSON(dim_to_hour, clock[F("dim_to_hour")]); 
+  CJSON(dim_to_minute, clock[F("dim_to_minute")]); 
+
   JsonObject usermods_settings = doc["um"];
   usermods.readFromConfig(usermods_settings);
 }
@@ -600,6 +619,26 @@ void serializeConfig() {
     dmx_fixmap.add(DMXFixtureMap[i]);
   #endif
   //}
+
+  JsonObject clock = doc.createNestedObject("clock");
+  clock[F("on")] = clock_on;
+  clock[F("norm_brightness")] = norm_brightness;
+  clock[F("dim_lights")] = dim_lights;
+  clock[F("dim_brightness")] = dim_brightness;
+  clock[F("clock_hex_col")] = clock_hex_col;
+  clock[F("time_format")] = time_format;
+  clock[F("date_format")] = date_format;
+  clock[F("show_time")] = show_time;
+  clock[F("show_date")] = show_date;
+  clock[F("show_greeting")] = show_greeting;
+  clock[F("scroll_speed")] = scroll_speed;
+  clock[F("opt_alt_speed")] = opt_alt_speed;
+  clock[F("auto_dim")] = auto_dim;
+  clock[F("dim_from_hour")] = dim_from_hour;
+  clock[F("dim_from_minute")] = dim_from_minute;
+  clock[F("dim_to_hour")] = dim_to_hour;
+  clock[F("dim_to_minute")] = dim_to_minute;
+
 
   JsonObject usermods_settings = doc.createNestedObject("um");
   usermods.addToConfig(usermods_settings);

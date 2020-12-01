@@ -32,7 +32,7 @@ void handleSettingsSet(AsyncWebServerRequest *request, byte subPage)
 {
 
   //0: menu 1: wifi 2: leds 3: ui 4: sync 5: time 6: sec 7: DMX
-  if (subPage <1 || subPage >7) return;
+  if (subPage <1 || subPage >8) return;
 
   //WIFI SETTINGS
   if (subPage == 1)
@@ -320,6 +320,43 @@ void handleSettingsSet(AsyncWebServerRequest *request, byte subPage)
   }
   
   #endif
+
+  //Clock
+  if (subPage == 8)
+  {
+    clock_on = (bool)request->hasArg(F("TOC"));
+   
+    if (!clock_on)
+    {
+      turnOffClock();
+    }
+    
+    norm_brightness = request->arg(F("CB")).toInt();
+    dim_lights = (bool)request->hasArg(F("DL"));
+    dim_brightness = request->arg(F("DB")).toInt();
+    setClockBrightness(dim_brightness);
+    strlcpy(clock_hex_col, request->arg(F("CHC")).c_str(), 8);
+    clock_col = color16bitFromDecOrHexString((char *)request->arg(F("CHC")).c_str());
+    setClockColor(clock_col);
+    time_format  = request->arg(F("TF")).toInt();
+    date_format  = request->arg(F("DTF")).toInt();
+    show_time = (bool)request->hasArg(F("ST"));
+    show_date = (bool)request->hasArg(F("SD"));
+    show_greeting = (bool)request->hasArg(F("SG"));
+    scroll_speed = (byte)((request->arg(F("TSS")).toInt()));
+    opt_alt_speed = (byte)((request->arg(F("OAC")).toInt()));
+    auto_dim = (bool)request->hasArg(F("AD"));
+    tmElements_t t = timeFromString(request->arg(F("DCF")));
+    dim_from_hour = t.Hour;
+    dim_from_minute = t.Minute;
+
+    t = timeFromString(request->arg(F("DCT")));
+    dim_to_hour = t.Hour;
+    dim_to_minute = t.Minute;
+
+  }
+
+  
   if (subPage != 6 || !doReboot) serializeConfig(); //do not save if factory reset
   if (subPage == 2) {
     strip.init(useRGBW,ledCount,skipFirstLed);
