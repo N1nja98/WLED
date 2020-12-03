@@ -12,3 +12,4 @@
 .gitignore
 .clang-format
 node_modules
+wled00/wled00.ino.cpp
