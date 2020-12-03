@@ -1,3 +1,37 @@
+
+Skip to content
+Pull requests
+Issues
+Marketplace
+Explore
+@N1nja98
+Aircoookie /
+WLED
+
+213
+3.8k
+
+    668
+
+Code
+Issues 291
+Pull requests 14
+Actions
+Projects 3
+Wiki
+Security
+
+    Insights
+
+WLED/usermods/esp32_multistrip/NpbWrapper.h
+@broccoliboy
+broccoliboy update to track core NpbWrapper.h (#1409)
+Latest commit dfb6216 2 days ago
+History
+2 contributors
+@Def3nder
+@broccoliboy
+471 lines (430 sloc) 16.1 KB
 //this code is a modified version of https://github.com/Makuna/NeoPixelBus/issues/103
 #ifndef NpbWrapper_h
 #define NpbWrapper_h
@@ -39,13 +73,6 @@
 #ifndef RLYMDE
   #define RLYMDE 1  //mode for relay, 0: LOW if LEDs are on 1: HIGH if LEDs are on
 #endif
-
-//enable color order override for a specific range of the strip
-//This can be useful if you want to chain multiple strings with incompatible color order
-//#define COLOR_ORDER_OVERRIDE
-#define COO_MIN    0
-#define COO_MAX   27 //not inclusive, this would set the override for LEDs 0-26
-#define COO_ORDER COL_ORDER_GRB
 
 #include <NeoPixelBrightnessBus.h>
 #include "const.h"
@@ -198,27 +225,8 @@ public:
     }
   }
 
-  void SetPixelColor(uint16_t indexPixel, RgbwColor c)
+  void SetPixelColorRaw(uint16_t indexPixel, RgbwColor c)
   {
-   RgbwColor col;
-
-    uint8_t co = _colorOrder;
-    #ifdef COLOR_ORDER_OVERRIDE
-    if (indexPixel >= COO_MIN && indexPixel < COO_MAX) co = COO_ORDER;
-    #endif
-
-    //reorder channels to selected order
-    switch (co)
-    {
-      case  0: col.G = c.G; col.R = c.R; col.B = c.B; break; //0 = GRB, default
-      case  1: col.G = c.R; col.R = c.G; col.B = c.B; break; //1 = RGB, common for WS2811
-      case  2: col.G = c.B; col.R = c.R; col.B = c.G; break; //2 = BRG
-      case  3: col.G = c.R; col.R = c.B; col.B = c.G; break; //3 = RBG
-      case  4: col.G = c.B; col.R = c.G; col.B = c.R; break; //4 = BGR
-      default: col.G = c.G; col.R = c.B; col.B = c.R; break; //5 = GBR
-    }
-    col.W = c.W;
-
     // figure out which strip this pixel index is on
     uint8_t stripIdx = 0;
     for (uint8_t idx = 0; idx < numStrips; idx++)
@@ -238,17 +246,17 @@ public:
     {
       case NeoPixelType_Grb:
       {
-        RgbColor c2 = RgbColor(col.R,col.G,col.B);
+        RgbColor rgb = RgbColor(c.R, c.G, c.B);
         switch (stripIdx)
         {
-          case 0: pGrb0->SetPixelColor(indexPixel, c2); break;
-          case 1: pGrb1->SetPixelColor(indexPixel, c2); break;
-          case 2: pGrb2->SetPixelColor(indexPixel, c2); break;
-          case 3: pGrb3->SetPixelColor(indexPixel, c2); break;
-          case 4: pGrb4->SetPixelColor(indexPixel, c2); break;
-          case 5: pGrb5->SetPixelColor(indexPixel, c2); break;
-          case 6: pGrb6->SetPixelColor(indexPixel, c2); break;
-          case 7: pGrb7->SetPixelColor(indexPixel, c2); break;
+          case 0: pGrb0->SetPixelColor(indexPixel, rgb); break;
+          case 1: pGrb1->SetPixelColor(indexPixel, rgb); break;
+          case 2: pGrb2->SetPixelColor(indexPixel, rgb); break;
+          case 3: pGrb3->SetPixelColor(indexPixel, rgb); break;
+          case 4: pGrb4->SetPixelColor(indexPixel, rgb); break;
+          case 5: pGrb5->SetPixelColor(indexPixel, rgb); break;
+          case 6: pGrb6->SetPixelColor(indexPixel, rgb); break;
+          case 7: pGrb7->SetPixelColor(indexPixel, rgb); break;
         }
         break;
       }
@@ -256,18 +264,46 @@ public:
       {
         switch (stripIdx)
         {
-          case 0: pGrbw0->SetPixelColor(indexPixel, col); break;
-          case 1: pGrbw1->SetPixelColor(indexPixel, col); break;
-          case 2: pGrbw2->SetPixelColor(indexPixel, col); break;
-          case 3: pGrbw3->SetPixelColor(indexPixel, col); break;
-          case 4: pGrbw4->SetPixelColor(indexPixel, col); break;
-          case 5: pGrbw5->SetPixelColor(indexPixel, col); break;
-          case 6: pGrbw6->SetPixelColor(indexPixel, col); break;
-          case 7: pGrbw7->SetPixelColor(indexPixel, col); break;
+          case 0: pGrbw0->SetPixelColor(indexPixel, c); break;
+          case 1: pGrbw1->SetPixelColor(indexPixel, c); break;
+          case 2: pGrbw2->SetPixelColor(indexPixel, c); break;
+          case 3: pGrbw3->SetPixelColor(indexPixel, c); break;
+          case 4: pGrbw4->SetPixelColor(indexPixel, c); break;
+          case 5: pGrbw5->SetPixelColor(indexPixel, c); break;
+          case 6: pGrbw6->SetPixelColor(indexPixel, c); break;
+          case 7: pGrbw7->SetPixelColor(indexPixel, c); break;
         }
         break;
       }
     }
+  }
+
+  void SetPixelColor(uint16_t indexPixel, RgbwColor c)
+  {
+    /*
+    Set pixel color with necessary color order conversion.
+    */
+
+    RgbwColor col;
+
+    uint8_t co = _colorOrder;
+    #ifdef COLOR_ORDER_OVERRIDE
+    if (indexPixel >= COO_MIN && indexPixel < COO_MAX) co = COO_ORDER;
+    #endif
+
+    //reorder channels to selected order
+    switch (co)
+    {
+      case  0: col.G = c.G; col.R = c.R; col.B = c.B; break; //0 = GRB, default
+      case  1: col.G = c.R; col.R = c.G; col.B = c.B; break; //1 = RGB, common for WS2811
+      case  2: col.G = c.B; col.R = c.R; col.B = c.G; break; //2 = BRG
+      case  3: col.G = c.R; col.R = c.B; col.B = c.G; break; //3 = RBG
+      case  4: col.G = c.B; col.R = c.G; col.B = c.R; break; //4 = BGR
+      default: col.G = c.G; col.R = c.B; col.B = c.R; break; //5 = GBR
+    }
+    col.W = c.W;
+
+    SetPixelColorRaw(indexPixel, col);
   }
 
   void SetBrightness(byte b)
@@ -313,11 +349,13 @@ public:
     }
   }
 
-  void SetColorOrder(byte colorOrder) {
+  void SetColorOrder(byte colorOrder)
+  {
     _colorOrder = colorOrder;
   }
 
-  uint8_t GetColorOrder() {
+  uint8_t GetColorOrder()
+  {
     return _colorOrder;
   }
 
@@ -376,56 +414,7 @@ public:
   // here needs to be unique, thus GetPixeColorRgbw
   uint32_t GetPixelColorRgbw(uint16_t indexPixel) const
   {
-    // figure out which strip this pixel index is on
-    uint8_t stripIdx = 0;
-    for (uint8_t idx = 0; idx < numStrips; idx++)
-    {
-      if (indexPixel >= pixelStripStartIdx[idx])
-      {
-        stripIdx = idx;
-      }
-      else
-      {
-        break;
-      }
-    }
-    
-    RgbwColor col(0,0,0,0);
-
-    // subtract strip start index so we're addressing just this strip instead of all pixels on all strips
-    indexPixel -= pixelStripStartIdx[stripIdx];
-    switch (_type)
-    {
-    case NeoPixelType_Grb:
-    {
-      switch (stripIdx)
-      {
-        case 0: col = pGrb0->GetPixelColor(indexPixel);
-        case 1: col = pGrb1->GetPixelColor(indexPixel);
-        case 2: col = pGrb2->GetPixelColor(indexPixel);
-        case 3: col = pGrb3->GetPixelColor(indexPixel);
-        case 4: col = pGrb4->GetPixelColor(indexPixel);
-        case 5: col = pGrb5->GetPixelColor(indexPixel);
-        case 6: col = pGrb6->GetPixelColor(indexPixel);
-        case 7: col = pGrb7->GetPixelColor(indexPixel);
-      }
-      break;
-    }
-    case NeoPixelType_Grbw:
-      switch (stripIdx)
-      {
-        case 0: col = pGrbw0->GetPixelColor(indexPixel);
-        case 1: col = pGrbw1->GetPixelColor(indexPixel);
-        case 2: col = pGrbw2->GetPixelColor(indexPixel);
-        case 3: col = pGrbw3->GetPixelColor(indexPixel);
-        case 4: col = pGrbw4->GetPixelColor(indexPixel);
-        case 5: col = pGrbw5->GetPixelColor(indexPixel);
-        case 6: col = pGrbw6->GetPixelColor(indexPixel);
-        case 7: col = pGrbw7->GetPixelColor(indexPixel);
-      }
-      break;
-    }
-
+    RgbwColor col = GetPixelColorRaw(indexPixel);
     uint8_t co = _colorOrder;
     #ifdef COLOR_ORDER_OVERRIDE
     if (indexPixel >= COO_MIN && indexPixel < COO_MAX) co = COO_ORDER;
@@ -443,14 +432,15 @@ public:
     }
 
     return 0;
+
   }
+  
 
 private:
   NeoPixelType _type;
-
-  uint16_t pixelStripStartIdx[numStrips];
   byte _colorOrder = 0;
 
+  uint16_t pixelStripStartIdx[numStrips];
 
   // pointers for every possible type for up to 8 strips
   NeoPixelBrightnessBusGrbRmt0 *pGrb0;
@@ -513,3 +503,17 @@ private:
   }
 };
 #endif
+
+    © 2020 GitHub, Inc.
+    Terms
+    Privacy
+    Security
+    Status
+    Help
+    Contact GitHub
+    Pricing
+    API
+    Training
+    Blog
+    About
+
